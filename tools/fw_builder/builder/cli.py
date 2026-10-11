@@ -282,16 +282,36 @@ def handle_watch(args: argparse.Namespace) -> int:
     """Handle watch subcommand."""
     log_watch(f"Starting firmware watcher daemon (debounce: {args.debounce}s, poll: {args.poll_interval}s)...")
     try:
-        from builder.watcher import start_watcher  # type: ignore
-        start_watcher(debounce_seconds=args.debounce, poll_interval=args.poll_interval)
-        return EXIT_SUCCESS
-    except ImportError:
-        log_watch("Watcher module not yet linked. Monitored directories: overlay/vendor, overlay/dts, overlay/boot.")
-        log_info("Exiting watcher (Milestone 4 feature).")
+        import time
+        from builder.watcher import start_watcher
+        from builder.repack import build_image
+
+        def rebuild_callback():
+            log_watch("Quiescence reached. Starting incremental build...")
+            t0 = time.perf_counter()
+            code, out_img = build_image(from_scratch=False, verbose=args.verbose)
+            duration = time.perf_counter() - t0
+            if code == 0:
+                log_success(f"Firmware image rebuilt in {duration:.2f}s: {out_img}")
+            else:
+                log_error(f"Firmware rebuild failed in {duration:.2f}s (code: {code})")
+
+        if getattr(args, "initial_build", False):
+            rebuild_callback()
+
+        start_watcher(
+            debounce_seconds=args.debounce,
+            poll_interval=args.poll_interval,
+            callback=rebuild_callback,
+            verbose=args.verbose,
+        )
         return EXIT_SUCCESS
     except KeyboardInterrupt:
-        log_info("Watcher terminated by user.")
+        log_info("Watcher daemon stopped by user.")
         return EXIT_KEYBOARD_INTERRUPT
+    except Exception as exc:
+        log_error(f"Watcher daemon error: {exc}")
+        return EXIT_BUILD_FAILURE
 
 
 def handle_mount(args: argparse.Namespace) -> int:
@@ -299,25 +319,16 @@ def handle_mount(args: argparse.Namespace) -> int:
     partition = args.partition
     log_mount(f"Mounting partition '{partition}' (ro={args.ro})...")
     try:
-        from builder.mount import mount_partition  # type: ignore
-        mount_partition(partition, read_only=args.ro, mount_point=args.mount_point)
+        from builder.mount import mount_partition
+        mnt_path = mount_partition(partition, read_only=args.ro, mount_point=args.mount_point)
+        log_success(f"Partition '{partition}' successfully mounted at {mnt_path}")
         return EXIT_SUCCESS
-    except ImportError:
-        # Fallback direct loop mount execution
-        mnt_path = args.mount_point or f"/home/lmods/AtriOS-Android/mnt_{partition}"
-        part_path = DEFAULT_CACHE_DIR / f"{partition}.PARTITION"
-        if not part_path.exists():
-            log_error(f"Partition image not found in pristine cache: {part_path}")
-            return EXIT_MOUNT_ERROR
-        ro_flag = "ro" if args.ro else "rw"
-        cmd = f"sudo mkdir -p {mnt_path} && sudo mount -o loop,{ro_flag} {part_path} {mnt_path}"
-        ret = os.system(cmd)
-        if ret == 0:
-            log_success(f"Partition '{partition}' successfully mounted at {mnt_path}")
-            return EXIT_SUCCESS
-        else:
-            log_error(f"Failed to mount partition '{partition}' (code: {ret})")
-            return EXIT_MOUNT_ERROR
+    except ValueError as exc:
+        log_error(f"Invalid partition argument: {exc}")
+        return EXIT_ARG_ERROR
+    except Exception as exc:
+        log_error(f"Failed to mount partition '{partition}': {exc}")
+        return EXIT_MOUNT_ERROR
 
 
 def handle_unmount(args: argparse.Namespace) -> int:
@@ -325,20 +336,33 @@ def handle_unmount(args: argparse.Namespace) -> int:
     partition = args.partition
     log_unmount(f"Unmounting partition '{partition}' (lazy={args.lazy})...")
     try:
-        from builder.mount import unmount_partition  # type: ignore
-        unmount_partition(partition, lazy=args.lazy)
-        return EXIT_SUCCESS
-    except ImportError:
-        mnt_path = f"/home/lmods/AtriOS-Android/mnt_{partition}"
-        lazy_flag = "-l " if args.lazy else ""
-        cmd = f"sudo sync && sudo umount {lazy_flag}{mnt_path}"
-        ret = os.system(cmd)
-        if ret == 0:
+        from builder.mount import unmount_partition, list_mounted_partitions
+        if getattr(args, "all", False) or partition.lower() == "all":
+            mounted = list_mounted_partitions()
+            if not mounted:
+                log_info("No active partitions currently mounted.")
+                return EXIT_SUCCESS
+            all_ok = True
+            for part_name in list(mounted.keys()):
+                ok = unmount_partition(part_name, lazy=args.lazy)
+                if ok:
+                    log_success(f"Partition '{part_name}' unmounted cleanly.")
+                else:
+                    log_error(f"Failed to unmount '{part_name}'.")
+                    all_ok = False
+            return EXIT_SUCCESS if all_ok else EXIT_MOUNT_ERROR
+
+        ok = unmount_partition(partition, lazy=args.lazy)
+        if ok:
             log_success(f"Partition '{partition}' unmounted cleanly.")
             return EXIT_SUCCESS
         else:
-            log_error(f"Failed to unmount '{partition}' (code: {ret})")
+            log_error(f"Failed to unmount partition '{partition}' (not mounted or device busy).")
             return EXIT_MOUNT_ERROR
+    except Exception as exc:
+        log_error(f"Unmount error: {exc}")
+        return EXIT_MOUNT_ERROR
+
 
 
 def handle_status(args: argparse.Namespace) -> int:
