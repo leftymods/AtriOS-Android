@@ -1,0 +1,126 @@
+#!/bin/sh
+
+function quasar_run() {
+    binary=$1
+    shift
+    LD_LIBRARY_PATH=/system/vendor/quasar/libs /system/vendor/quasar/$binary "$@"
+}
+
+function quasar_status() {
+    pidof quasar_launcher2 > /dev/null
+}
+
+function quasar_start() {
+    if quasar_status; then
+        echo "quasar is already running"
+        return 1
+    fi
+
+    echo "Starting quasar..."
+    /system/vendor/quasar/run.sh
+}
+
+function quasar_stop() {
+    if ! quasar_status; then
+        echo "quasar is not running"
+        return 1
+    fi
+
+    echo "Stopping quasar..."
+    killall quasar_launcher2
+    sleep 5
+    killall -9 maind
+    killall -9 begemot 2> /dev/null
+}
+
+function quasar_restart() {
+    quasar_stop
+    quasar_start
+}
+
+function quasar_version() {
+    quasar_run maind --version
+}
+
+function quasar_device_id() {
+    quasar_run maind --device-id
+}
+
+function quasar_wifi_info() {
+    quasar_run maind --wifi-info
+}
+
+function quasar_full_info() {
+    quasar_run maind --full-info
+}
+
+function quasar_set_dev_backend_flag() {
+    quasar_run maind --set-dev-backend-flag
+}
+
+function quasar_remove_dev_backend_flag() {
+    quasar_run maind --remove-dev-backend-flag
+}
+
+function quasar_cli() {
+    quasar_run maind --cli
+}
+
+function quasar_save_last_monotonic_time() {
+    quasar_run maind --save-last-monotonic-time
+}
+
+function quasar_get_prop() {
+    quasar_run maind --getprop /data/quasar/props &> /dev/null
+    cat /data/quasar/props
+    rm /data/quasar/props
+}
+
+function usage() {
+    echo "Usage: q {start|stop|restart|version|device-id|wifi-info|full-info|backend-dev|backend-prod|cli|save-last-monotonic-time|getprop}"
+}
+
+case $1 in
+    start)
+        quasar_start
+        ;;
+    stop)
+        quasar_stop
+        ;;
+    restart)
+        quasar_restart
+        ;;
+    version)
+        quasar_version
+        ;;
+    device-id)
+      quasar_device_id
+      ;;
+    wifi-info)
+      quasar_wifi_info
+      ;;
+    full-info)
+      quasar_full_info
+      ;;
+    backend-dev)
+      quasar_set_dev_backend_flag
+      quasar_restart
+      ;;
+    backend-prod)
+      quasar_remove_dev_backend_flag
+      quasar_restart
+      ;;
+    cli)
+      quasar_cli
+      ;;
+    save-last-monotonic-time)
+        quasar_save_last_monotonic_time
+        ;;
+    getprop)
+        quasar_get_prop
+        ;;
+    *)
+        usage
+        exit 1
+        ;;
+esac

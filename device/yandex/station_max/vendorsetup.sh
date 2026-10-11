@@ -1,0 +1,2 @@
+add_lunch_combo x3_yandex-userdebug
+add_lunch_combo x3_yandex-user

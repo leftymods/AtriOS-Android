@@ -1,0 +1,25 @@
+am-batch-size 6
+am-type nnet
+commands 1:2:3:4:5:6:7:8:9:11:14:15:16:17:18:19:20:33:35:37,39:37,40:38,39:38,40
+dither 0.1
+feat-frontend log-mel-fbank
+feat-pipeline 
+frame-shift 10
+frame-size 25
+hit-at-peak subhit
+interval-after-last-activation 25
+mel-num-bins 40
+metric geometric
+need-priors false
+new-unhandled-nbytes true
+nnet-representation float
+sample-rate 16000
+skip-rate 1
+spotter-type chen14
+subthresholds 0.353:0.122:0.00782:0.00951:0.00563:0.00441:0.0117:0.0191:0.085:0.156:0.166:0.0357:0.135:0.112:0.174:0.15:0.0254:0.16:0.217:0.604:0.0872:0.516:0.0747
+thresholds 0.353:0.122:0.00782:0.00951:0.00563:0.00441:0.0117:0.0191:0.085:0.156:0.166:0.445:0.135:0.112:0.174:0.15:0.0254:0.16:0.217:0.604:0.0872:0.516:0.0747
+use-vad false
+version ru-RU-quasar-commands-24Aug23-11-25-quantize-stop-tuned-subthreshold
+w-max 60
+w-smooth 16
+zeroing-confidence-buffer-after-hit true

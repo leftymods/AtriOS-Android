@@ -1,0 +1,48 @@
+on early-init
+    loglevel 7
+
+on init
+
+on post-fs-data
+    mkdir /data/vendor/quasar 0775 system system
+
+on boot
+    # Yandex Hardware Modules (Whitelisted by custom key)
+    insmod /vendor/lib/modules/quasar_pcba_ids.ko
+    insmod /vendor/lib/modules/fixedregulator.ko
+    insmod /vendor/lib/modules/leds-is31fl32xx.ko
+    insmod /vendor/lib/modules/quasar_led_ring.ko
+    insmod /vendor/lib/modules/gowin_led_device.ko
+    insmod /vendor/lib/modules/quasar_led_screen.ko
+    insmod /vendor/lib/modules/ltr308als01.ko
+    insmod /vendor/lib/modules/rotary-volume.ko
+    insmod /vendor/lib/modules/zigbee-control.ko
+    insmod /vendor/lib/modules/tb_detect.ko
+
+    # Yandex Audio Subsystem
+    insmod /vendor/lib/modules/snd-soc-sy6045s.ko
+    insmod /vendor/lib/modules/snd-soc-es8156.ko
+    insmod /vendor/lib/modules/snd-soc-es7210.ko
+    insmod /vendor/lib/modules/snd-soc-pcm1774.ko
+    insmod /vendor/lib/modules/snd-soc-pcm1774-i2c.ko
+    insmod /vendor/lib/modules/snd-aloop.ko
+
+    # Video & GPU
+    insmod /vendor/lib/modules/media_clock.ko
+    insmod /vendor/lib/modules/firmware.ko
+    insmod /vendor/lib/modules/decoder_common.ko
+    insmod /vendor/lib/modules/stream_input.ko
+    insmod /vendor/lib/modules/vpu.ko
+    insmod /vendor/lib/modules/mali.ko
+
+    # Connectivity
+    insmod /vendor/lib/modules/88x2es.ko
+    insmod /vendor/lib/modules/uwe5621_bsp_sdio.ko
+    insmod /vendor/lib/modules/sprdwl_ng.ko
+    insmod /vendor/lib/modules/sprdbt_tty.ko
+
+    # Permissions
+    chmod 0666 /dev/led_screen
+    chmod 0666 /dev/led_ring
+    chmod 0666 /dev/rotary_volume
+    chmod 0666 /dev/zigbee

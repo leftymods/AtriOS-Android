@@ -1,0 +1,61 @@
+# bt remote map
+key 1     BACK
+key 2     1
+key 3     2
+key 4     3
+key 5     4
+key 6     5
+key 7     6
+key 8     7
+key 9     8
+key 10    9
+key 11    0
+key 63    VOICE_ASSIST
+key 158   BACK
+key 353   DPAD_CENTER
+key 108   DPAD_DOWN
+key 103   DPAD_UP
+key 172   HOME
+key 105   DPAD_LEFT
+key 106   DPAD_RIGHT
+key 115   VOLUME_UP
+key 114   VOLUME_DOWN
+key 116   POWER
+#key 139   MENU
+key 113   VOLUME_MUTE
+key 362   GUIDE
+key 167   MEDIA_RECORD
+key 402   CHANNEL_UP
+key 403   CHANNEL_DOWN
+
+
+key 208   MEDIA_FAST_FORWARD
+key 164   MEDIA_PLAY_PAUSE
+key 168   MEDIA_REWIND
+#for cmcc bt remote
+key usage 0x0c0223 HOME
+key usage 0x070066 G
+key usage 0x0c0224 BACK
+key usage 0x070065 MENU
+key usage 0x0c0041 DPAD_CENTER
+key usage 0x070052 DPAD_UP
+key usage 0x070051 DPAD_DOWN
+key usage 0x070050 DPAD_LEFT
+key usage 0x07004f DPAD_RIGHT
+key usage 0x0c00e9 VOLUME_UP
+key usage 0x0c00ea VOLUME_DOWN
+key usage 0x0c00e2 VOLUME_MUTE
+key usage 0x070027 0
+key usage 0x07001e 1
+key usage 0x07001f 2
+key usage 0x070020 3
+key usage 0x070021 4
+key usage 0x070022 5
+key usage 0x070023 6
+key usage 0x070024 7
+key usage 0x070025 8
+key usage 0x070026 9
+key usage 0x0700cc L
+key usage 0x07004b PAGE_UP
+key usage 0x07004e PAGE_DOWN
+key usage 0x07003e VOICE_ASSIST

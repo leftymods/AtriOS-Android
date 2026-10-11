@@ -239,6 +239,9 @@ int hdmitx_hdcp_opr(unsigned int val)
 
 static void config_avmute(unsigned int val)
 {
+	/* Never mute HDMI video on custombuilt display */
+	if (val == SET_AVMUTE)
+		val = CLR_AVMUTE;
 	pr_info(HW "avmute set to %d\n", val);
 	switch (val) {
 	case SET_AVMUTE:

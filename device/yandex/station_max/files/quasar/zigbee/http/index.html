@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Zigbee Gateway</title>
+    <link href="bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-3">
+        <div id="alert-success" class="alert alert-success" role="alert" hidden>
+            Command executed successfully
+        </div>
+        <div id="alert-fail" class="alert alert-danger" role="alert" hidden>
+            Command execution failed
+        </div>
+        <div class="card mb-3">
+            <div class="card-header">
+                Network Status
+            </div>
+            <ul id="status-info" class="list-group list-group-flush">
+                <li class="list-group-item">
+                    <span id="status-badge-offline" class="badge text-bg-secondary">Not formed</span>
+                    <span id="status-badge-online" class="badge text-bg-success" hidden>Formed</span>
+                </li>
+                <li class="list-group-item">
+                    EUI64: <span id="status-field-eui64">FFFFFFFFFFFF</small>
+                </li>
+                <li class="list-group-item">
+                    PAN ID: <span id="status-field-pan-id">FFFF</small>
+                </li>
+            </ul>
+        </div>
+        <div class="card mb-3">
+            <div class="card-header">
+                Zigbee Gateway
+            </div>
+            <div class="card-body">
+                <form>
+                    <div class="input-group mb-3">
+                        <button type="submit" class="btn btn-primary" formaction="/factory_reset">Factory Reset</button>
+                    </div>
+                </form>
+
+                <form>
+                    <div class="input-group mb-3">
+                        <button id="button-set-channel" type="submit" class="btn btn-primary" formaction="/set_channel">Set Channel</button>
+                        <input type="number" class="form-control" name="channel" min="11" max="25" placeholder="Channel" required>
+                    </div>
+                </form>
+
+                <form>
+                    <div class="input-group mb-3">
+                        <button id="button-form-network" type="submit" class="btn btn-primary" formaction="/form_network">Form Network</button>
+                    </div>
+                </form>
+
+                <form>
+                    <div class="input-group mb-3">
+                        <button id="button-set-install-code" type="submit" class="btn btn-primary" formaction="/set_install_code">Set Install Code</button>
+                        <input type="text" class="form-control" name="eui64" placeholder="Address" required>
+                        <input type="text" class="form-control" name="install_code" placeholder="Install Code" required>
+                    </div>
+                </form>
+
+                <form>
+                    <div class="input-group mb-3">
+                        <button id="button-permit-join" type="submit" class="btn btn-primary" formaction="/permit_join">Permit Join</button>
+                        <input type="number" class="form-control" name="duration" min="0" max="255" placeholder="Duration" required>
+                    </div>
+                </form>
+
+                <form>
+                    <div class="input-group mb-3">
+                        <button id="button-onoff-on" type="submit" class="btn btn-primary" formaction="/on_off/on">On</button>
+                        <button id="button-onoff-off" type="submit" class="btn btn-primary" formaction="/on_off/off">Off</button>
+                        <button id="button-onoff-toggle" type="submit" class="btn btn-primary" formaction="/on_off/toggle">Toggle</button>
+                        <input type="text" class="form-control" name="address" placeholder="Address">
+                        <input type="text" class="form-control" name="endpoint" min="1" max="240" placeholder="Endpoint" required>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const forms = document.getElementsByTagName("form");
+
+        const elements = {
+            status: {
+                main: document.getElementById('status-info'),
+                badgeOffline: document.getElementById('status-badge-offline'),
+                badgeOnline: document.getElementById('status-badge-online'),
+                fieldPanId: document.getElementById('status-field-pan-id'),
+                fieldEui64: document.getElementById('status-field-eui64'),
+            },
+            alert: {
+                success: document.getElementById("alert-success"),
+                fail: document.getElementById("alert-fail")
+            },
+            buttons: {
+                setChannel: document.getElementById("button-set-channel"),
+                formNetwork: document.getElementById("button-form-network"),
+                setInstallCode: document.getElementById("button-set-install-code"),
+                permitJoin: document.getElementById("button-permit-join"),
+                onoffOn: document.getElementById("button-onoff-on"),
+                onoffOff: document.getElementById("button-onoff-off"),
+                onoffToggle: document.getElementById("button-onoff-toggle"),
+            }
+        };
+
+        /**
+         * updateButtons
+         * Disable/enable buttons based on network status
+         */
+        const updateButtons = (network) => {
+            elements.buttons.setChannel.disabled = network;
+            elements.buttons.formNetwork.disabled = network;
+            elements.buttons.setInstallCode.disabled = !network;
+            elements.buttons.permitJoin.disabled = !network;
+            elements.buttons.onoffOn.disabled = !network;
+            elements.buttons.onoffOff.disabled = !network;
+            elements.buttons.onoffToggle.disabled = !network;
+        }
+
+        /**
+         * updateStatus
+         * @param .network [boolean] - network status
+         * @param .panId [string] - panId of formed network
+         * @param .eui64 [string] - eui64 of device
+         * @example
+         * updateStatus({
+         *    network: true,
+         *    panId: '87fe',
+         * });
+         */
+         const updateStatus = ({
+            network,
+            eui64,
+            panId
+        }) => {
+            elements.status.main.hidden = false;
+
+            updateButtons(network);
+
+            if (network) {
+                elements.status.badgeOffline.hidden = true;
+                elements.status.badgeOnline.hidden = false;
+            } else {
+                elements.status.badgeOffline.hidden = false;
+                elements.status.badgeOnline.hidden = true;
+            }
+
+            if (eui64 != elements.status.fieldEui64.innerText) {
+                elements.status.fieldEui64.innerText = eui64;
+            }
+            if (panId != elements.status.fieldPanId.innerText) {
+                elements.status.fieldPanId.innerText = panId;
+            }
+        };
+
+        const fetchAndUpdateStatus = async() => {
+            const response = await (await fetch('/status')).json();
+
+            updateStatus(response);
+
+            setTimeout(function() {
+                fetchAndUpdateStatus();
+            }, 1000);
+        };
+
+        fetchAndUpdateStatus();
+
+        Array.from(forms).forEach(form => {
+            form.addEventListener("submit", (event) => {
+                event.preventDefault();
+
+                const request = event.submitter.formAction;
+                const body = new URLSearchParams(new FormData(form));
+
+                fetch(request, {
+                    method: "POST",
+                    body: body,
+                }).then(data => {
+                    if (data.status === 200) {
+                        elements.alert.success.hidden = false;
+                        elements.alert.fail.hidden = true;
+                    } else {
+                        elements.alert.success.hidden = true;
+                        elements.alert.fail.hidden = false;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

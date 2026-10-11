@@ -95,6 +95,15 @@ static struct hdmitx_dev hdmitx_device = {
 	.frac_rate_policy = 1,
 };
 
+/* hdmitx_vinfo and hdmitx_get_current_vinfo defined early */
+
+static inline bool is_custombuilt_locked(void)
+{
+	struct vinfo_s *info = hdmitx_get_current_vinfo();
+	return (hdmitx_device.cur_VIC == HDMI_CUSTOMBUILT) ||
+	       (info && info->name && strcmp(info->name, "custombuilt") == 0);
+}
+
 static const struct dv_info dv_dummy;
 static int log_level;
 static int hdr_mute_frame = 3;
@@ -314,6 +323,19 @@ static  int  set_disp_mode(const char *mode)
 {
 	int ret =  -1;
 	enum hdmi_vic vic;
+
+	if (!mode)
+		return -1;
+
+	if (is_custombuilt_locked()) {
+		if (strncmp(mode, "custombuilt", 11) != 0 ||
+		    (mode[11] != '\0' && mode[11] != '\n' && mode[11] != '\r' && mode[11] != ' ')) {
+			pr_warn("hdmitx: display locked to custombuilt (1024x600@60Hz), rejecting mode '%s'\n", mode);
+			return 0;
+		}
+		pr_info("hdmitx: display already locked to custombuilt (1024x600@60Hz)\n");
+		return 0;
+	}
 
 	vic = hdmitx_edid_get_VIC(&hdmitx_device, mode, 1);
 	if (strncmp(mode, "2160p30hz", strlen("2160p30hz")) == 0)
@@ -556,6 +578,15 @@ static int set_disp_mode_auto(void)
 
 	pr_info(SYS "get current mode: %s\n", info->name);
 
+	if (strcmp(info->name, "custombuilt") == 0) {
+		pr_info(SYS "custombuilt locked in auto mode (1024x600@60Hz)\n");
+		hdev->cur_VIC = HDMI_CUSTOMBUILT;
+		hdev->output_blank_flag = 1;
+		hdev->ready = 1;
+		edidinfo_attach_to_vinfo(hdev);
+		return 1;
+	}
+
 	/*update hdmi checksum to vout*/
 	memcpy(info->hdmichecksum, hdev->rxcap.chksum, 10);
 
@@ -690,6 +721,11 @@ static ssize_t show_disp_mode(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
 	int pos = 0;
+
+	if (is_custombuilt_locked()) {
+		pos += snprintf(buf+pos, PAGE_SIZE, "custombuilt\n");
+		return pos;
+	}
 
 	pos += snprintf(buf+pos, PAGE_SIZE, "VIC:%d\n",
 		hdmitx_device.cur_VIC);
@@ -2670,10 +2706,16 @@ static ssize_t show_disp_cap(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
 	int i, pos = 0;
-	const char *native_disp_mode =
-		hdmitx_edid_get_native_VIC(&hdmitx_device);
+	const char *native_disp_mode;
 	enum hdmi_vic vic;
 	char mode_tmp[32];
+
+	if (is_custombuilt_locked()) {
+		pos += snprintf(buf+pos, PAGE_SIZE, "custombuilt*\n");
+		return pos;
+	}
+
+	native_disp_mode = hdmitx_edid_get_native_VIC(&hdmitx_device);
 
 	if (hdmitx_device.tv_no_edid) {
 		pos += snprintf(buf+pos, PAGE_SIZE, "null edid\n");
@@ -2712,8 +2754,14 @@ static ssize_t show_preferred_mode(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
 	int pos = 0;
-	struct rx_cap *prxcap = &hdmitx_device.rxcap;
+	struct rx_cap *prxcap;
 
+	if (is_custombuilt_locked()) {
+		pos += snprintf(buf+pos, PAGE_SIZE, "custombuilt\n");
+		return pos;
+	}
+
+	prxcap = &hdmitx_device.rxcap;
 	pos += snprintf(buf+pos, PAGE_SIZE, "%s\n",
 		hdmitx_edid_vic_to_string(prxcap->preferred_mode));
 
@@ -5316,6 +5364,12 @@ static void hdmitx_hpd_plugout_handler(struct work_struct *work)
 
 	if (!(hdev->hdmitx_event & (HDMI_TX_HPD_PLUGOUT)))
 		return;
+
+	if (is_custombuilt_locked()) {
+		pr_info(SYS "custombuilt locked, ignore plugout\n");
+		hdev->hdmitx_event &= ~HDMI_TX_HPD_PLUGOUT;
+		return;
+	}
 	hdev->hdcp_mode = 0;
 	hdev->hdcp_bcaps_repeater = 0;
 	hdev->hwop.cntlddc(hdev, DDC_HDCP_MUX_INIT, 1);

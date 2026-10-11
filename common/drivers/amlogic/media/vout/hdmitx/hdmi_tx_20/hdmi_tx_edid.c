@@ -2913,6 +2913,8 @@ enum hdmi_vic hdmitx_edid_get_VIC(struct hdmitx_dev *hdev,
 		vesa_vic = HDMI_Unknown;
 	if (vic != HDMI_Unknown) {
 		if (force_flag == 0) {
+			if (vic == HDMI_CUSTOMBUILT)
+				return HDMI_CUSTOMBUILT;
 			for (j = 0 ; j < prxcap->VIC_count ; j++) {
 				if (prxcap->VIC[j] == vic)
 					break;

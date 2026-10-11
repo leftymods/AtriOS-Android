@@ -1,0 +1,6 @@
+dither 0.1
+feat-pipeline 
+frame-shift 10
+frame-size 20
+sample-rate 16000
+ca-version contractivation-test

@@ -423,3 +423,18 @@ static int __init meson_securitykey_init(void)
 	return  platform_driver_register(&securitykey_platform_driver);
 }
 module_init(meson_securitykey_init);
+
+EXPORT_SYMBOL(secure_storage_get_enctype);
+EXPORT_SYMBOL(secure_storage_getbuffer);
+EXPORT_SYMBOL(secure_storage_list);
+EXPORT_SYMBOL(secure_storage_notifier_ex);
+EXPORT_SYMBOL(secure_storage_query);
+EXPORT_SYMBOL(secure_storage_read);
+EXPORT_SYMBOL(secure_storage_remove);
+EXPORT_SYMBOL(secure_storage_set_enctype);
+EXPORT_SYMBOL(secure_storage_status);
+EXPORT_SYMBOL(secure_storage_tell);
+EXPORT_SYMBOL(secure_storage_type);
+EXPORT_SYMBOL(secure_storage_verify);
+EXPORT_SYMBOL(secure_storage_version);
+EXPORT_SYMBOL(secure_storage_write);

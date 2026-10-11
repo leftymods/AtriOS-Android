@@ -3387,6 +3387,11 @@ void osd_enable_hw(u32 index, u32 enable)
 	int count = (pxp_mode == 1)?3:WAIT_AFBC_READY_COUNT;
 	u32 output_index;
 
+	if (enable == 0 && current->comm && strcmp(current->comm, "systemcontrol") == 0) {
+		pr_info("fb: ignoring osd[%d] disable from systemcontrol to keep display active\n", index);
+		enable = 1;
+	}
+
 	if (index == 0) {
 		osd_log_info("osd[%d] enable: %d (%s)\n",
 				index, enable, current->comm);

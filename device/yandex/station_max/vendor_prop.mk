@@ -1,0 +1,26 @@
+# Yandex Station Max Vendor Properties
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.product.board=yandexstation_2 \
+    ro.board.platform=yandexstation_2 \
+    ro.product.vendor.manufacturer=Yandex \
+    ro.product.vendor.model=yandexstation_2 \
+    ro.product.vendor.brand=Yandex \
+    ro.product.vendor.name=yandexstation_2 \
+    ro.product.vendor.device=yandexstation_2 \
+    net.hostname=Yandex-Station-Max \
+    ro.vendor.platform.has.mbxuimode=true \
+    ro.vendor.platform.has.realoutputmode=true \
+    ro.vendor.platform.need.display.hdmicec=true \
+    service.adb.tcp.port=5555 \
+    vendor.afbcd.enable=1 \
+    ro.config.low_ram=false \
+    dalvik.vm.heapgrowthlimit=256m \
+    dalvik.vm.heapsize=512m \
+    ro.sf.lcd_density=160 \
+    ro.vendor.platform.hdmi.device_type=4 \
+    vendor.load_i2c_modules=1 \
+    vendor.i2c_modules_ready=1 \
+    persist.vendor.iwlwifi.version=from.4.9 \
+    media.support.dolbyvision=true \
+    ro.vendor.platform.support.dolby=true \
+    ro.vendor.platform.support.dts=true

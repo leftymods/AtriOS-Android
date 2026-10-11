@@ -1,0 +1,10 @@
+{
+    "identification_config": {
+        "voiceprint_frontends": [
+            {
+                "frontend_type": "tflite-online-ecapa-tdnn",
+                "config_rel_path": "tflite-online-ecapa-tdnn-frontend/config.json"
+            }
+        ]
+    }
+}

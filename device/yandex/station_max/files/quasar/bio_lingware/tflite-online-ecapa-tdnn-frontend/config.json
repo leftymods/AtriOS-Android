@@ -1,0 +1,8 @@
+{
+    "compatibility-tag": "tflite-online-ecapa-tdnn-0.0.0",
+    "partials-interval-frames-count": 40,
+    "embedding-dim": 512,
+    "head": "head.pb",
+    "body": "body.pb",
+    "tflite-num-threads": 1
+}

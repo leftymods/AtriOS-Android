@@ -224,8 +224,22 @@ int set_vout_mode(char *name)
 	enum vmode_e mode;
 	int ret = 0;
 
+	if (!name)
+		return -1;
+
 	vout_trim_string(name);
 	VOUTPR("vmode set to %s\n", name);
+
+	if (strcmp(vout_mode, "custombuilt") == 0 ||
+	    strcmp(vout_mode_uboot, "custombuilt") == 0) {
+		if (strcmp(name, "custombuilt") != 0) {
+			pr_warn("vout: display locked to custombuilt (1024x600@60Hz), rejecting mode change to '%s'\n", name);
+			return 0;
+		} else {
+			pr_info("vout: display already locked to custombuilt (1024x600@60Hz)\n");
+			return 0;
+		}
+	}
 
 	if (strcmp(name, local_name) == 0) {
 		VOUTPR("don't set the same mode as current, exit\n");
