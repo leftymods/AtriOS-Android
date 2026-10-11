@@ -1,4 +1,4 @@
-on early-init
+﻿on early-init
     insmod /boot/dwc3.ko
 
 on init
@@ -21,8 +21,8 @@ on boot
     write /config/usb_gadget/g1/bcdUSB 0x0200
     mkdir /config/usb_gadget/g1/strings/0x409 0770
     write /config/usb_gadget/g1/strings/0x409/serialnumber ${ro.serialno}
-    write /config/usb_gadget/g1/strings/0x409/manufacturer sinovoip
-    write /config/usb_gadget/g1/strings/0x409/product bananapi
+    write /config/usb_gadget/g1/strings/0x409/manufacturer Yandex
+    write /config/usb_gadget/g1/strings/0x409/product AtriStation
     mkdir /config/usb_gadget/g1/functions/ffs.adb
     mkdir /config/usb_gadget/g1/functions/mtp.gs0
     mkdir /config/usb_gadget/g1/configs/b.1 0770 shell shell

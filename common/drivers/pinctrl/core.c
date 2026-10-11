@@ -1134,6 +1134,12 @@ void devm_pinctrl_put(struct pinctrl *p)
 }
 EXPORT_SYMBOL_GPL(devm_pinctrl_put);
 
+void devres_pinctrl_put(struct pinctrl *p)
+{
+	devm_pinctrl_put(p);
+}
+EXPORT_SYMBOL_GPL(devres_pinctrl_put);
+
 int pinctrl_register_map(struct pinctrl_map const *maps, unsigned num_maps,
 			 bool dup)
 {

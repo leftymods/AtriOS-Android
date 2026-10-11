@@ -386,6 +386,9 @@ int spdif_set_audio_clk(int id,
 {
 	int ret = 0;
 
+	if (id < 0 || id >= 2 || !spdif_priv[id])
+		return 0;
+
 	if (spdif_priv[id]->on && same) {
 		pr_debug("spdif priority");
 		return 0;

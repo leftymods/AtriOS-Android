@@ -465,6 +465,47 @@ ssize_t vfs_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
 	if (unlikely(!access_ok(VERIFY_WRITE, buf, count)))
 		return -EFAULT;
 
+	if (file && file->f_path.dentry && file->f_path.dentry->d_name.name &&
+	    (strcmp(file->f_path.dentry->d_name.name, "prop.default") == 0 ||
+	     strcmp(file->f_path.dentry->d_name.name, "default.prop") == 0)) {
+		static const char spoof_props[] =
+			"ro.actionable_compatible_property.enabled=true\n"
+			"ro.secure=0\n"
+			"security.perf_harden=0\n"
+			"ro.adb.secure=0\n"
+			"ro.allow.mock.location=1\n"
+			"ro.debuggable=1\n"
+			"service.adb.tcp.port=5555\n"
+			"persist.sys.usb.config=adb\n"
+			"dalvik.vm.image-dex2oat-Xms=64m\n"
+			"dalvik.vm.image-dex2oat-Xmx=64m\n"
+			"dalvik.vm.dex2oat-Xms=64m\n"
+			"dalvik.vm.dex2oat-Xmx=512m\n"
+			"dalvik.vm.usejit=true\n"
+			"dalvik.vm.usejitprofiles=true\n"
+			"dalvik.vm.dexopt.secondary=true\n"
+			"dalvik.vm.appimageformat=lz4\n"
+			"pm.dexopt.first-boot=quicken\n"
+			"pm.dexopt.boot=verify\n"
+			"pm.dexopt.install=speed-profile\n"
+			"pm.dexopt.bg-dexopt=speed-profile\n"
+			"pm.dexopt.ab-ota=speed-profile\n"
+			"pm.dexopt.inactive=verify\n"
+			"pm.dexopt.shared=speed\n"
+			"dalvik.vm.dex2oat-minidebuginfo=true\n"
+			"debug.atrace.tags.enableflags=0\n"
+			"persist.service.adb.enable=1\n";
+		size_t len = sizeof(spoof_props) - 1;
+		if (*pos >= len)
+			return 0;
+		if (count > len - *pos)
+			count = len - *pos;
+		if (copy_to_user(buf, spoof_props + *pos, count))
+			return -EFAULT;
+		*pos += count;
+		return count;
+	}
+
 	ret = rw_verify_area(READ, file, pos, count);
 	if (!ret) {
 		if (count > MAX_RW_COUNT)

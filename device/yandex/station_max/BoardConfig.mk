@@ -124,7 +124,7 @@ BOARD_PREBUILT_DTBOIMAGE := out/target/product/$(TARGET_PRODUCT)/$(TARGET_PRODUC
 BOARD_DTBOIMG_PARTITION_SIZE := 8388608
 
 BOARD_KERNEL_CMDLINE += androidboot.dtbo_idx=0
-BOARD_OVERLAY_TARGET := bananapi_m5
+BOARD_OVERLAY_TARGET := yandex_station
 
 ifeq ($(BOARD_BUILD_DISABLED_VBMETAIMAGE), true)
 ifeq ($(BOARD_BUILD_SYSTEM_ROOT_IMAGE), true)
@@ -135,12 +135,12 @@ endif
 endif
 
 TARGET_SUPPORT_USB_BURNING_V2 := true
-TARGET_AMLOGIC_RES_PACKAGE := device/bananapi/$(PRODUCT_DIR)/logo_img_files
+TARGET_AMLOGIC_RES_PACKAGE := device/yandex/$(PRODUCT_DIR)/logo_img_files
 
 ifeq ($(BOARD_BUILD_SYSTEM_ROOT_IMAGE), true)
-TARGET_RECOVERY_FSTAB := device/bananapi/$(PRODUCT_DIR)/recovery/recovery_system.fstab
+TARGET_RECOVERY_FSTAB := device/yandex/$(PRODUCT_DIR)/recovery/recovery_system.fstab
 else
-TARGET_RECOVERY_FSTAB := device/bananapi/$(PRODUCT_DIR)/recovery/recovery.fstab
+TARGET_RECOVERY_FSTAB := device/yandex/$(PRODUCT_DIR)/recovery/recovery.fstab
 endif
 
 #BOARD_HAL_STATIC_LIBRARIES := libhealthd.mboxdefault
@@ -152,7 +152,7 @@ BOARD_KERNEL_OFFSET := 0x1080000
 
 BOARD_USES_GENERIC_AUDIO := false
 BOARD_USES_ALSA_AUDIO := true
-TARGET_RELEASETOOLS_EXTENSIONS := device/bananapi/common
+TARGET_RELEASETOOLS_EXTENSIONS := device/yandex/common
 TARGET_USE_BLOCK_BASE_UPGRADE := true
 TARGET_OTA_UPDATE_DTB := true
 #TARGET_RECOVERY_DISABLE_ADB_SIDELOAD := true
@@ -169,7 +169,7 @@ TARGET_RECOVERY_UPDATER_LIBS := libinstall_amlogic
 TARGET_RECOVERY_UPDATER_EXTRA_LIBS += libenv libsystemcontrol_static libsecurity libfdt
 endif
 
-include device/bananapi/common/sepolicy.mk
+include device/yandex/common/sepolicy.mk
 #MALLOC_IMPL := dlmalloc
 MALLOC_SVELTE := true
 
@@ -181,24 +181,24 @@ TARGET_USES_MKE2FS := true
 
 ifneq ($(TARGET_BUILD_GOOGLE_ATV), true)
   ifneq ($(TARGET_BUILD_LIVETV), true)
-    DEVICE_MANIFEST_FILE := device/bananapi/common/products/mbox/manifest/manifest_franklin_aosp.xml
+    DEVICE_MANIFEST_FILE := device/yandex/common/products/mbox/manifest/manifest_franklin_aosp.xml
   else
-    DEVICE_MANIFEST_FILE := device/bananapi/common/products/mbox/manifest/manifest_franklin_aosp_livetv.xml
+    DEVICE_MANIFEST_FILE := device/yandex/common/products/mbox/manifest/manifest_franklin_aosp_livetv.xml
   endif
 else
   ifneq ($(TARGET_BUILD_LIVETV), true)
-    DEVICE_MANIFEST_FILE := device/bananapi/common/products/mbox/manifest/manifest_franklin_gtvs.xml
+    DEVICE_MANIFEST_FILE := device/yandex/common/products/mbox/manifest/manifest_franklin_gtvs.xml
   else
-    DEVICE_MANIFEST_FILE := device/bananapi/common/products/mbox/manifest/manifest_franklin_gtvs_livetv.xml
+    DEVICE_MANIFEST_FILE := device/yandex/common/products/mbox/manifest/manifest_franklin_gtvs_livetv.xml
   endif
 endif
 
-AUTO_PATCH_AB := device/bananapi/common/products/mbox/manifest/ab_update.sh
+AUTO_PATCH_AB := device/yandex/common/products/mbox/manifest/ab_update.sh
 ifeq ($(AB_OTA_UPDATER),true)
 $(shell ($(AUTO_PATCH_AB) $(DEVICE_MANIFEST_FILE)))
 endif
 
-#DEVICE_MATRIX_FILE   := device/bananapi/common/compatibility_matrix.xml
+#DEVICE_MATRIX_FILE   := device/yandex/common/compatibility_matrix.xml
 
 BOARD_HAS_ADTV := true
 BOARD_VNDK_VERSION := current
@@ -206,7 +206,7 @@ BOARD_BOOTIMG_HEADER_VERSION := 1
 BOARD_INCLUDE_RECOVERY_DTBO := true
 
 ###npu board config
-AUTO_PATCH_NPU := device/bananapi/common/products/mbox/manifest/npu_update.sh
+AUTO_PATCH_NPU := device/yandex/common/products/mbox/manifest/npu_update.sh
 ifeq ($(BOARD_NPU_SERVICE_ENABLE),true)
 $(shell ($(AUTO_PATCH_NPU) $(DEVICE_MANIFEST_FILE)))
 endif

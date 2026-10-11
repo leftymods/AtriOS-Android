@@ -1,4 +1,4 @@
-$(call inherit-product, device/bananapi/common/core_amlogic.mk)
+$(call inherit-product, device/yandex/common/core_amlogic.mk)
 
 ifeq ($(TARGET_BUILD_LIVETV),true)
 #TV input HAL
@@ -125,9 +125,9 @@ PRODUCT_COPY_FILES += \
 #copy lowmemorykiller.txt
 ifeq ($(BUILD_WITH_LOWMEM_COMMON_CONFIG),true)
 PRODUCT_COPY_FILES += \
-	device/bananapi/common/config/lowmemorykiller_2G.txt:$(TARGET_COPY_OUT_VENDOR)/etc/lowmemorykiller_2G.txt \
-	device/bananapi/common/config/lowmemorykiller.txt:$(TARGET_COPY_OUT_VENDOR)/etc/lowmemorykiller.txt \
-	device/bananapi/common/config/lowmemorykiller_512M.txt:$(TARGET_COPY_OUT_VENDOR)/etc/lowmemorykiller_512M.txt
+	device/yandex/common/config/lowmemorykiller_2G.txt:$(TARGET_COPY_OUT_VENDOR)/etc/lowmemorykiller_2G.txt \
+	device/yandex/common/config/lowmemorykiller.txt:$(TARGET_COPY_OUT_VENDOR)/etc/lowmemorykiller.txt \
+	device/yandex/common/config/lowmemorykiller_512M.txt:$(TARGET_COPY_OUT_VENDOR)/etc/lowmemorykiller_512M.txt
 endif
 
 # USB
@@ -142,10 +142,10 @@ endif
 
 # Bluetooth idc config file
 PRODUCT_COPY_FILES += \
-    device/bananapi/common/products/mbox/Vendor_1915_Product_0001.idc:$(TARGET_COPY_OUT_VENDOR)/usr/idc/Vendor_1915_Product_0001.idc \
-    device/bananapi/common/products/mbox/Vendor_1d5a_Product_c082.idc:$(TARGET_COPY_OUT_VENDOR)/usr/idc/Vendor_1d5a_Product_c082.idc
+    device/yandex/common/products/mbox/Vendor_1915_Product_0001.idc:$(TARGET_COPY_OUT_VENDOR)/usr/idc/Vendor_1915_Product_0001.idc \
+    device/yandex/common/products/mbox/Vendor_1d5a_Product_c082.idc:$(TARGET_COPY_OUT_VENDOR)/usr/idc/Vendor_1d5a_Product_c082.idc
 
-custom_keylayouts := $(wildcard device/bananapi/common/keyboards/*.kl)
+custom_keylayouts := $(wildcard device/yandex/common/keyboards/*.kl)
 PRODUCT_COPY_FILES += $(foreach file,$(custom_keylayouts),\
     $(file):$(TARGET_COPY_OUT_VENDOR)/usr/keylayout/$(notdir $(file)))
 

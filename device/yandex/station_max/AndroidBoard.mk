@@ -16,7 +16,7 @@ LOCAL_PATH := $(call my-dir)
 
 
 include $(LOCAL_PATH)/Kernel.mk
-include device/bananapi/common/factory.mk
+include device/yandex/common/factory.mk
 
 #moved to INSTALLED_RADIOIMAGE_TARGET in factory.mk for secureboot
 #$(call add-radio-file,bootloader.img)

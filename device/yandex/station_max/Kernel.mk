@@ -13,8 +13,8 @@ ifeq ($(PRODUCT_BUILD_SECURE_BOOT_IMAGE_DIRECTLY),true)
 endif# ifeq ($(PRODUCT_BUILD_SECURE_BOOT_IMAGE_DIRECTLY),true)
 
 ifneq ($(TARGET_KERNEL_BUILT_FROM_SOURCE), true)
-TARGET_PREBUILT_KERNEL := device/bananapi/x3_yandex-kernel/Image.gz
-LOCAL_DTB := device/bananapi/x3_yandex-kernel/bananapi_m5.dtb
+TARGET_PREBUILT_KERNEL := device/yandex/x3_yandex-kernel/Image.gz
+LOCAL_DTB := device/yandex/x3_yandex-kernel/sm1_s905x3_yandex.dtb
 
 $(TARGET_PREBUILT_KERNEL): $(INSTALLED_BOARDDTB_TARGET)
 	@echo "cp kernel modules"
@@ -24,16 +24,16 @@ $(TARGET_PREBUILT_KERNEL): $(INSTALLED_BOARDDTB_TARGET)
 	mkdir -p $(PRODUCT_OUT)/obj/KERNEL_OBJ/
 	mkdir -p $(PRODUCT_OUT)/recovery/root/boot
 	mkdir -p $(KERNEL_KO_OUT)
-	cp device/bananapi/x3_yandex-kernel/lib/mali.ko $(PRODUCT_OUT)/vendor/lib/
-	cp device/bananapi/x3_yandex-kernel/lib/modules/* $(KERNEL_KO_OUT)/
-	cp device/bananapi/x3_yandex-kernel/lib/optee_armtz.ko $(PRODUCT_OUT)/vendor/lib/
-	cp device/bananapi/x3_yandex-kernel/lib/optee.ko $(PRODUCT_OUT)/vendor/lib/
-	cp device/bananapi/x3_yandex-kernel/lib/firmware/video/* $(PRODUCT_OUT)/vendor/lib/firmware/video/
-	-cp device/bananapi/x3_yandex-kernel/obj/KERNEL_OBJ/vmlinux $(PRODUCT_OUT)/obj/KERNEL_OBJ/
+	cp device/yandex/x3_yandex-kernel/lib/mali.ko $(PRODUCT_OUT)/vendor/lib/
+	cp device/yandex/x3_yandex-kernel/lib/modules/* $(KERNEL_KO_OUT)/
+	cp device/yandex/x3_yandex-kernel/lib/optee_armtz.ko $(PRODUCT_OUT)/vendor/lib/
+	cp device/yandex/x3_yandex-kernel/lib/optee.ko $(PRODUCT_OUT)/vendor/lib/
+	cp device/yandex/x3_yandex-kernel/lib/firmware/video/* $(PRODUCT_OUT)/vendor/lib/firmware/video/
+	-cp device/yandex/x3_yandex-kernel/obj/KERNEL_OBJ/vmlinux $(PRODUCT_OUT)/obj/KERNEL_OBJ/
 	mkdir -p $(PRODUCT_OUT)/$(TARGET_COPY_OUT_VENDOR)/lib/modules/
 	cp $(KERNEL_KO_OUT)/* $(PRODUCT_OUT)/$(TARGET_COPY_OUT_VENDOR)/lib/modules/
 	mkdir -p $(PRODUCT_OUT)/vendor/lib/egl
-	cp device/bananapi/x3_yandex-kernel/lib/egl/* $(PRODUCT_OUT)/vendor/lib/egl/
+	cp device/yandex/x3_yandex-kernel/lib/egl/* $(PRODUCT_OUT)/vendor/lib/egl/
 
 $(INSTALLED_KERNEL_TARGET): $(TARGET_PREBUILT_KERNEL) | $(ACP)
 	@echo "Kernel installed"
@@ -49,14 +49,13 @@ $(INSTALLED_2NDBOOTLOADER_TARGET): $(INSTALLED_BOARDDTB_TARGET) $(BOARD_PREBUILT
 
 else
 
--include device/bananapi/common/gpu/dvalin-kernel.mk
--include device/bananapi/common/media_modules.mk
+-include device/yandex/common/gpu/dvalin-kernel.mk
+-include device/yandex/common/media_modules.mk
 -include hardware/amlogic/wifi/configs/wifi_modules.mk
 -include hardware/amlogic/bluetooth/configs/bluetooth_modules.mk
--include device/bananapi/common/tb_modules.mk
--include device/bananapi/common/npu_modules.mk
--include device/bananapi/common/tuner/tuner_modules.mk
-#KERNEL_DEVICETREE := sm1_s905x3_bananapi_m5 sm1_s905x3_bananapi_m2_pro
+-include device/yandex/common/tb_modules.mk
+-include device/yandex/common/npu_modules.mk
+-include device/yandex/common/tuner/tuner_modules.mk
 KERNEL_DEVICETREE := sm1_s905x3_yandex
 KERNEL_DEFCONFIG := meson64_defconfig
 KERNEL_ARCH := arm64
@@ -85,7 +84,7 @@ CONFIG_DIR := $(KERNEL_ROOTDIR)/arch/$(KERNEL_ARCH)/configs/
 KASAN_DEFCONFIG := kasan_defconfig
 BUILD_CONFIG := $(KASAN_DEFCONFIG)
 $(shell cat $(CONFIG_DIR)/$(KERNEL_DEFCONFIG) > $(CONFIG_DIR)/$(KASAN_DEFCONFIG))
-$(shell cat device/bananapi/common/kasan.cfg >> $(CONFIG_DIR)/$(KASAN_DEFCONFIG))
+$(shell cat device/yandex/common/kasan.cfg >> $(CONFIG_DIR)/$(KASAN_DEFCONFIG))
 endif
 
 KERNEL_CONFIG := $(KERNEL_OUT)/.config

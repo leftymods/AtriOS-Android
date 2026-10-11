@@ -8,7 +8,7 @@ VERSION="1.0 (2014.12.4)"
 
 SCRIPT_PATH=$PWD/$(dirname "$0")
 
-#assume default script located in device/bananapi/common
+#assume default script located in device/yandex/common
 ANDROID_PATH=${SCRIPT_PATH}/../../..
 KERNEL_PATH=${ANDROID_PATH}/common
 OUTPUT_PATH=/var/tmp/${USER}/build_tmp/

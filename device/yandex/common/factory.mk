@@ -1,7 +1,7 @@
 IMGPACK := $(BUILD_OUT_EXECUTABLES)/logo_img_packer$(BUILD_EXECUTABLE_SUFFIX)
 PRODUCT_UPGRADE_OUT := $(PRODUCT_OUT)/upgrade
 AML_EMMC_BIN_GENERATOR := $(BOARD_AML_VENDOR_PATH)/tools/aml_upgrade/amlogic_emmc_bin_maker.sh
-PRODUCT_COMMON_DIR := device/bananapi/common/products/$(PRODUCT_TYPE)
+PRODUCT_COMMON_DIR := device/yandex/common/products/$(PRODUCT_TYPE)
 
 ifeq ($(TARGET_NO_RECOVERY),true)
 BUILT_IMAGES := boot.img bootloader.img dt.img
@@ -139,8 +139,8 @@ $(INSTALLED_BOARDDTB_TARGET) : $(KERNEL_DEVICETREE_SRC) $(DTCTOOL) $(DTIMGTOOL) 
 		fi;\
 		$(MAKE) -C $(KERNEL_ROOTDIR) O=../$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) CROSS_COMPILE=$(PREFIX_CROSS_COMPILE) $(strip $(aDts)).dtb; \
 	)
-	cp device/bananapi/common/common_partition.xml $(PRODUCT_OUT)/emmc_burn.xml
-	./device/bananapi/common/dtsi2xml.sh $(KERNEL_ROOTDIR)/$(KERNEL_DEVICETREE_DIR)/$(TARGET_PARTITION_DTSI)  $(PRODUCT_OUT)/emmc_burn.xml
+	cp device/yandex/common/common_partition.xml $(PRODUCT_OUT)/emmc_burn.xml
+	./device/yandex/common/dtsi2xml.sh $(KERNEL_ROOTDIR)/$(KERNEL_DEVICETREE_DIR)/$(TARGET_PARTITION_DTSI)  $(PRODUCT_OUT)/emmc_burn.xml
 ifneq ($(strip $(word 2, $(KERNEL_DEVICETREE)) ),)
 	$(hide) $(DTBTOOL) -o $@ -p $(KERNEL_OUT)/scripts/dtc/ $(KERNEL_OUT)/$(KERNEL_DEVICETREE_DIR)
 else# elif dts num == 1
@@ -359,7 +359,7 @@ endef #define update-aml_upgrade-conf
 
 ifeq ($(PRODUCT_BUILD_SECURE_BOOT_IMAGE_DIRECTLY),true)
 ifeq ($(PRODUCT_AML_SECURE_BOOT_VERSION3),true)
-PRODUCT_AML_FIRMWARE_ANTIROLLBACK_CONFIG := ./device/bananapi/$(PRODUCT_DIR)/fw_arb.txt
+PRODUCT_AML_FIRMWARE_ANTIROLLBACK_CONFIG := ./device/yandex/$(PRODUCT_DIR)/fw_arb.txt
 define aml-secureboot-sign-bootloader
 	@echo -----aml-secureboot-sign-bootloader ------
 	rm $(PRODUCT_OUT)/bl_tmp -rf
@@ -547,11 +547,11 @@ endif
 	cp $(PRODUCT_OUT)/odm.img $(PRODUCT_OUT)/fastboot_auto/
 	cp $(PRODUCT_OUT)/upgrade/logo.img $(PRODUCT_OUT)/fastboot_auto/
 ifeq ($(AB_OTA_UPDATER),true)
-	cp device/bananapi/common/flash-all-ab.sh $(PRODUCT_OUT)/fastboot_auto/flash-all.sh
-	cp device/bananapi/common/flash-all-ab.bat $(PRODUCT_OUT)/fastboot_auto/flash-all.bat
+	cp device/yandex/common/flash-all-ab.sh $(PRODUCT_OUT)/fastboot_auto/flash-all.sh
+	cp device/yandex/common/flash-all-ab.bat $(PRODUCT_OUT)/fastboot_auto/flash-all.bat
 else
-	cp device/bananapi/common/flash-all.sh $(PRODUCT_OUT)/fastboot_auto/
-	cp device/bananapi/common/flash-all.bat $(PRODUCT_OUT)/fastboot_auto/
+	cp device/yandex/common/flash-all.sh $(PRODUCT_OUT)/fastboot_auto/
+	cp device/yandex/common/flash-all.bat $(PRODUCT_OUT)/fastboot_auto/
 endif
 	sed -i 's/fastboot update fastboot.zip/fastboot update $(TARGET_PRODUCT)-fastboot-image-$(BUILD_NUMBER).zip/' $(PRODUCT_OUT)/fastboot_auto/flash-all.sh
 	sed -i 's/fastboot update fastboot.zip/fastboot update $(TARGET_PRODUCT)-fastboot-image-$(BUILD_NUMBER).zip/' $(PRODUCT_OUT)/fastboot_auto/flash-all.bat
@@ -575,7 +575,7 @@ else
 $(AMLOGIC_OTA_PACKAGE_TARGET): $(BRO)
 endif
 
-EXTRA_SCRIPT := $(TARGET_DEVICE_DIR)/../../../device/bananapi/common/recovery/updater-script
+EXTRA_SCRIPT := $(TARGET_DEVICE_DIR)/../../../device/yandex/common/recovery/updater-script
 
 $(AMLOGIC_OTA_PACKAGE_TARGET): $(AML_TARGET).zip $(BUILT_ODMIMAGE_TARGET)
 	@echo "Package OTA2: $@"
@@ -617,7 +617,7 @@ else
 	-cp $(PRODUCT_OUT)/recovery.img $(AML_TARGET)/IMAGES/recovery.img
 endif
 	$(hide) PATH=$(foreach p,$(INTERNAL_USERIMAGES_BINARY_PATHS),$(p):)$$PATH MKBOOTIMG=$(MKBOOTIMG) \
-	   ./device/bananapi/common/ota_amlogic.py -v \
+	   ./device/yandex/common/ota_amlogic.py -v \
 	   --block \
 	   --extracted_input_target_files $(patsubst %.zip,%,$(BUILT_TARGET_FILES_PACKAGE)) \
 	   -p $(HOST_OUT) \

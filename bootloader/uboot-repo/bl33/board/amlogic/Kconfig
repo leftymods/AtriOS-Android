@@ -256,9 +256,6 @@ config SM1_AC214_V1
          bool "Support amlogic sm1 ac214 v1 board"
          default n
 
-config BANANAPI_M5_V1
-         bool "Support bananapi m5 v1 board"
-         default n
 
 config SM1_AC223_V1
 	bool "Support amlogic sm1 ac223 v1 board"
@@ -561,9 +558,6 @@ if SM1_AC214_V1
 source "board/amlogic/sm1_ac214_v1/Kconfig"
 endif
 
-if BANANAPI_M5_V1
-source "board/amlogic/bananapi_m5_v1/Kconfig"
-endif
 
 if TM2_T962E2_AB319_V1
 source "board/amlogic/tm2_t962e2_ab319_v1/Kconfig"
@@ -591,4 +585,12 @@ endif
 
 if XINGYI_X96_Q1
 source "board/amlogic/g12a_x96_q1_v1/Kconfig"
+endif
+
+config YANDEX_STATION_V1
+	bool "Support Yandex Station Max board"
+	default n
+
+if YANDEX_STATION_V1
+source "board/amlogic/yandex_station_v1/Kconfig"
 endif

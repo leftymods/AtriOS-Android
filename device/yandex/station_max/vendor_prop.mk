@@ -1,13 +1,18 @@
-# Yandex Station Max Vendor Properties
+# AtriStation Max Vendor Properties (leftymods)
 PRODUCT_PROPERTY_OVERRIDES += \
-    ro.product.board=yandexstation_2 \
-    ro.board.platform=yandexstation_2 \
-    ro.product.vendor.manufacturer=Yandex \
-    ro.product.vendor.model=yandexstation_2 \
-    ro.product.vendor.brand=Yandex \
-    ro.product.vendor.name=yandexstation_2 \
-    ro.product.vendor.device=yandexstation_2 \
-    net.hostname=Yandex-Station-Max \
+    ro.product.board=AtriStationMax \
+    ro.board.platform=AtriStationMax \
+    ro.product.vendor.manufacturer=leftymods \
+    ro.product.vendor.model=AtriStation Max \
+    ro.product.vendor.brand=leftymods \
+    ro.product.vendor.name=AtriStationMax \
+    ro.product.vendor.device=AtriStationMax \
+    ro.product.manufacturer=leftymods \
+    ro.product.model=AtriStation Max \
+    ro.product.brand=leftymods \
+    ro.product.name=AtriStationMax \
+    ro.product.device=AtriStationMax \
+    net.hostname=AtriStationMax \
     ro.vendor.platform.has.mbxuimode=true \
     ro.vendor.platform.has.realoutputmode=true \
     ro.vendor.platform.need.display.hdmicec=true \

@@ -331,10 +331,10 @@ PRODUCT_PACKAGES += libam_adp_adec \
       libdec_ca_wvcas
 endif
 
-#BOARD_SECCOMP_POLICY := device/bananapi/common/seccomp
+#BOARD_SECCOMP_POLICY := device/yandex/common/seccomp
 PRODUCT_COPY_FILES += \
-    device/bananapi/common/seccomp/mediaextractor.policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/mediaextractor.policy \
-    device/bananapi/common/seccomp/mediacodec.policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/mediacodec.policy
+    device/yandex/common/seccomp/mediaextractor.policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/mediaextractor.policy \
+    device/yandex/common/seccomp/mediacodec.policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/mediacodec.policy
 
 
 BOARD_AML_MEDIAHAL_PATH := hardware/amlogic/media/
@@ -345,7 +345,7 @@ BOARD_AML_MEDIA_HAL_CONFIG := $(BOARD_AML_MEDIAHAL_PATH)/media_base_config.mk
 
 # for media modules
 PRODUCT_COPY_FILES += \
-	device/bananapi/common/init.amlogic.media.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.amlogic.media.rc
+	device/yandex/common/init.amlogic.media.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.amlogic.media.rc
 
 
 #########################################################################

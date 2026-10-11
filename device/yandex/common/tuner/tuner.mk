@@ -25,6 +25,6 @@ ifneq ($(strip $(TUNER_MODULE)),)
 $(warning TUNER_MODULE is $(TUNER_MODULE))
 PRODUCT_COPY_FILES += $(foreach tuner, $(TUNER_MODULE),\
     $(if $(findstring true, $(KERNEL_A32_SUPPORT)),\
-        device/bananapi/common/tuner/32/$(tuner)_fe_32.ko:$(PRODUCT_OUT)/obj/lib_vendor/$(tuner)_fe.ko,\
-        device/bananapi/common/tuner/64/$(tuner)_fe_64.ko:$(PRODUCT_OUT)/obj/lib_vendor/$(tuner)_fe.ko))
+        device/yandex/common/tuner/32/$(tuner)_fe_32.ko:$(PRODUCT_OUT)/obj/lib_vendor/$(tuner)_fe.ko,\
+        device/yandex/common/tuner/64/$(tuner)_fe_64.ko:$(PRODUCT_OUT)/obj/lib_vendor/$(tuner)_fe.ko))
 endif

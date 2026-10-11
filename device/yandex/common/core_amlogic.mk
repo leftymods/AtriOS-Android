@@ -285,7 +285,7 @@ PRODUCT_SUPPORTS_VERITY_FEC := true
 # The dev key is used to sign boot and recovery images, and the verity
 # metadata table. Actual product deliverables will be re-signed by hand.
 # We expect this file to exist with the suffixes ".x509.pem" and ".pk8".
-PRODUCT_VERITY_SIGNING_KEY := device/bananapi/common/security/verity
+PRODUCT_VERITY_SIGNING_KEY := device/yandex/common/security/verity
 ifneq ($(TARGET_USE_SECURITY_DM_VERITY_MODE_WITH_TOOL),true)
 PRODUCT_PACKAGES += \
         verity_key.amlogic
@@ -300,15 +300,15 @@ endif
 #ifeq ($(BUILD_WITH_APP_OPTIMIZATION),true)
 
 PRODUCT_COPY_FILES += \
-    device/bananapi/common/optimization/liboptimization_32.so:$(TARGET_COPY_OUT_VENDOR)/lib/liboptimization.so \
-    device/bananapi/common/optimization/config:$(TARGET_COPY_OUT_VENDOR)/package_config/config
+    device/yandex/common/optimization/liboptimization_32.so:$(TARGET_COPY_OUT_VENDOR)/lib/liboptimization.so \
+    device/yandex/common/optimization/config:$(TARGET_COPY_OUT_VENDOR)/package_config/config
 
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.vendor.app.optimization=true
 
 ifeq ($(ANDROID_BUILD_TYPE), 64)
 PRODUCT_COPY_FILES += \
-    device/bananapi/common/optimization/liboptimization_64.so:$(TARGET_COPY_OUT_VENDOR)/lib64/liboptimization.so
+    device/yandex/common/optimization/liboptimization_64.so:$(TARGET_COPY_OUT_VENDOR)/lib64/liboptimization.so
 endif
 #endif
 
@@ -373,7 +373,7 @@ PRODUCT_COPY_FILES += \
         hardware/amlogic/wifi/multi_wifi/android.hardware.wifi@1.0-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/android.hardware.wifi@1.0-service.rc
 
 PRODUCT_COPY_FILES += \
-    device/bananapi/common/audio/audio_effects.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects.xml
+    device/yandex/common/audio/audio_effects.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects.xml
 
 #Audio HAL
 PRODUCT_PACKAGES += \

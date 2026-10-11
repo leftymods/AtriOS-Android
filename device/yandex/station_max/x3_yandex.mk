@@ -1,4 +1,4 @@
-# Copyright (C) 2018 Amlogic Inc
+﻿# Copyright (C) 2018 Amlogic Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 # build for Meson reference board.
 #
 
-PRODUCT_DIR := x3_yandex
+PRODUCT_DIR := station_max
 
 # Dynamic enable start/stop zygote_secondary in 64bits
 # and 32bit system, default closed
@@ -26,15 +26,15 @@ PRODUCT_DIR := x3_yandex
 # Inherit from those products. Most specific first.
 ifeq ($(ANDROID_BUILD_TYPE), 64)
 ifeq ($(TARGET_DYNAMIC_ZYGOTE_SECONDARY_ENABLE), true)
-$(call inherit-product, device/bananapi/common/dynamic_zygote_seondary/dynamic_zygote_64_bit.mk)
+$(call inherit-product, device/yandex/common/dynamic_zygote_seondary/dynamic_zygote_64_bit.mk)
 else
 $(call inherit-product, build/target/product/core_64_bit.mk)
 endif
 endif
 
-$(call inherit-product, device/bananapi/$(PRODUCT_DIR)/vendor_prop.mk)
-$(call inherit-product, device/bananapi/common/products/mbox/product_mbox.mk)
-$(call inherit-product, device/bananapi/$(PRODUCT_DIR)/device.mk)
+$(call inherit-product, device/yandex/$(PRODUCT_DIR)/vendor_prop.mk)
+$(call inherit-product, device/yandex/common/products/mbox/product_mbox.mk)
+$(call inherit-product, device/yandex/$(PRODUCT_DIR)/device.mk)
 $(call inherit-product-if-exists, vendor/google/products/gms.mk)
 #########################################################################
 #
@@ -75,15 +75,11 @@ PRODUCT_PROPERTY_OVERRIDES += \
         ro.hdmi.set_menu_language=true \
         persist.sys.hdmi.keep_awake=false
 
-PRODUCT_NAME := x3_yandex
-PRODUCT_DEVICE := x3_yandex
-PRODUCT_BRAND := Yandex
-PRODUCT_MODEL := Yandex Station Max (S905X3)
-PRODUCT_MANUFACTURER := Yandex
-PRODUCT_DEVICE := x3_yandex
-PRODUCT_BRAND := xingyi
-PRODUCT_MODEL := x3_yandex
-PRODUCT_MANUFACTURER := xingyi
+PRODUCT_NAME := AtriStationMax
+PRODUCT_DEVICE := AtriStationMax
+PRODUCT_BRAND := leftymods
+PRODUCT_MODEL := AtriStation Max
+PRODUCT_MANUFACTURER := leftymods
 
 TARGET_KERNEL_BUILT_FROM_SOURCE := true
 
@@ -96,7 +92,7 @@ WITH_LIBPLAYER_MODULE := false
 
 OTA_UP_PART_NUM_CHANGED := false
 
-BOARD_AML_TDK_KEY_PATH := device/bananapi/common/tdk_keys/
+BOARD_AML_TDK_KEY_PATH := device/yandex/common/tdk_keys/
 #AB_OTA_UPDATER :=true
 BUILD_WITH_AVB := true
 
@@ -104,7 +100,7 @@ ifeq ($(BUILD_WITH_AVB),true)
 #BOARD_AVB_ENABLE := true
 BOARD_BUILD_DISABLED_VBMETAIMAGE := true
 BOARD_AVB_ALGORITHM := SHA256_RSA2048
-BOARD_AVB_KEY_PATH := device/bananapi/common/security/testkey_rsa2048.pem
+BOARD_AVB_KEY_PATH := device/yandex/common/security/testkey_rsa2048.pem
 BOARD_AVB_ROLLBACK_INDEX := 0
 endif
 
@@ -212,7 +208,7 @@ endif
 #
 ########################################################################
 #TUNER_MODULE := cxd2856
-#include device/bananapi/common/tuner/tuner.mk
+#include device/yandex/common/tuner/tuner.mk
 
 ########################################################################
 #
@@ -261,10 +257,10 @@ endif
 
 ifeq ($(AB_OTA_UPDATER),true)
 PRODUCT_COPY_FILES += \
-    device/bananapi/$(PRODUCT_DIR)/fstab.ab.amlogic:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.amlogic
+    device/yandex/$(PRODUCT_DIR)/fstab.ab.amlogic:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.amlogic
 else
 PRODUCT_COPY_FILES += \
-    device/bananapi/$(PRODUCT_DIR)/fstab.system.amlogic:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.amlogic
+    device/yandex/$(PRODUCT_DIR)/fstab.system.amlogic:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.amlogic
 endif
 
 #########################################################################
@@ -329,7 +325,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # Audio
 #
 BOARD_ALSA_AUDIO=tiny
-include device/bananapi/common/audio.mk
+include device/yandex/common/audio.mk
 
 #########################################################################
 #
@@ -390,7 +386,7 @@ BUILD_WITH_MIRACAST_HDCP := true
 endif
 endif
 
-$(call inherit-product, device/bananapi/common/media.mk)
+$(call inherit-product, device/yandex/common/media.mk)
 
 #########################################################################
 #
@@ -439,7 +435,7 @@ BUILD_WITH_LOWMEM_COMMON_CONFIG := true
 BOARD_USES_USB_PM := true
 
 
-include device/bananapi/common/software.mk
+include device/yandex/common/software.mk
 ifeq ($(TARGET_BUILD_GOOGLE_ATV),true)
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.sf.lcd_density=320
@@ -493,9 +489,9 @@ endif
 #                                     TB detect
 #
 #########################################################################
-$(call inherit-product, device/bananapi/common/tb_detect.mk)
+$(call inherit-product, device/yandex/common/tb_detect.mk)
 
-include device/bananapi/common/gpu/dvalin-user-arm64.mk
+include device/yandex/common/gpu/dvalin-user-arm64.mk
 #####npu ovx service
 BOARD_NPU_SERVICE_ENABLE := false
 ifeq ($(BOARD_NPU_SERVICE_ENABLE), true)

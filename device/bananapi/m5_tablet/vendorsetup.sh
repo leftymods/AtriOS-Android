@@ -1,3 +1,0 @@
-add_lunch_combo m5_tablet-eng
-add_lunch_combo m5_tablet-user
-add_lunch_combo m5_tablet-userdebug

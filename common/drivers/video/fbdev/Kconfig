@@ -190,11 +190,11 @@ config FB_MACMODES
        default n
 
 config FB_BACKLIGHT
-	bool
+	bool "Framebuffer backlight support"
 	depends on FB
 	select BACKLIGHT_LCD_SUPPORT
 	select BACKLIGHT_CLASS_DEVICE
-	default n
+	default y
 
 config FB_MODE_HELPERS
         bool "Enable Video Mode Handling Helpers"

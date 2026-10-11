@@ -223,9 +223,20 @@ unsigned long __attribute__((unused))
 		/*if find match dtb, return address, or else return main entrance address*/
 		if (0xffff != dtb_match_num) {
 			printf("      Find match dtb: %d\n", dtb_match_num);
-			/*this offset is based on dtb image package, so should add on base address*/
-			fdt_addr = (fdt_addr + readl(fdt_addr + AML_DT_FIRST_DTB_OFFSET + \
-				dtb_match_num * aml_dtb_header_size + aml_dtb_offset_offset));
+			unsigned long base_fdt = fdt_addr;
+			unsigned int dt_offset = readl(base_fdt + AML_DT_FIRST_DTB_OFFSET + \
+				dtb_match_num * aml_dtb_header_size + aml_dtb_offset_offset);
+			fdt_addr = base_fdt + dt_offset;
+			if (fdt_check_header((void *)fdt_addr) != 0) {
+				unsigned long scan;
+				for (scan = base_fdt + 0x40; scan < base_fdt + 0x20000; scan += 4) {
+					if (fdt_check_header((void *)scan) == 0) {
+						printf("      Found valid FDT via scan at offset: 0x%lx\n", scan - base_fdt);
+						fdt_addr = scan;
+						break;
+					}
+				}
+			}
 			if (gzip_format) {
 				memcpy((void *)dt_entry, (void *)fdt_addr, DTB_MAX_SIZE);
 				fdt_addr = dt_entry;
@@ -235,7 +246,16 @@ unsigned long __attribute__((unused))
 			return fdt_addr;
 		}
 		else{
-			printf("      Not match any dtb.\n");
+			printf("      Not match any dtb, scanning for first valid FDT header...\n");
+			unsigned long scan;
+			for (scan = fdt_addr + 0x40; scan < fdt_addr + 0x20000; scan += 4) {
+				if (fdt_check_header((void *)scan) == 0) {
+					printf("      Found fallback FDT at offset: 0x%lx\n", scan - fdt_addr);
+					if (gzip_buf)
+						free(gzip_buf);
+					return scan;
+				}
+			}
 			if (gzip_buf)
 				free(gzip_buf);
 			return fdt_addr;

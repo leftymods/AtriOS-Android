@@ -1,65 +1,146 @@
-# BPI-S905X3-Android9
+# 🚀 AtriStation OS — AtriStation Max (Amlogic S905X3 / SM1)
 
-----------
+<div align="center">
 
-**Prepare**
+![Platform](https://img.shields.io/badge/Platform-Amlogic%20S905X3%20%28SM1%20Rev%20B%29-blue.svg?style=for-the-badge)
+![Android](https://img.shields.io/badge/Android-9.0%20Pie%20%28API%2028%29-green.svg?style=for-the-badge)
+![Kernel](https://img.shields.io/badge/Kernel-Linux%204.9.113%20%28SMP%20PREEMPT%29-orange.svg?style=for-the-badge)
+![Security](https://img.shields.io/badge/AVB%202.0-RSA%204096--bit-red.svg?style=for-the-badge)
+![Manufacturer](https://img.shields.io/badge/Manufacturer-leftymods-purple.svg?style=for-the-badge)
+![Device](https://img.shields.io/badge/Device-AtriStation%20Max-cyan.svg?style=for-the-badge)
 
-Get the docker image from [Sinovoip Docker Hub](https://hub.docker.com/r/sinovoip/bpi-build-android-7/) , Build the android source with this docker environment.
+**Official custom firmware distribution for AtriStation Max hardware platform by leftymods.**
 
-Other environment requirements, please refer to google Android's official build environment [requirements](https://source.android.com/setup/build/requirements) and [set up guide](https://source.android.com/setup/build/initializing) 
+[English Documentation](#-english-documentation) • [Русская документация](#-русская-документация)
 
-Download the [toolchains](https://download.banana-pi.dev/d/3ebbfa04265d4dddb81b/?p=/Tools/toolchains/bpi-m5&mode=list) and extract each tarball to /opt/ and set the PATH before build
+</div>
 
-    $ export PATH=$PATH:/opt/gcc-linaro-aarch64-none-elf-4.9-2014.09_linux/bin
-    $ export PATH=$PATH:/opt/gcc-linaro-arm-none-eabi-4.8-2014.04_linux/bin
-    $ export PATH=$PATH:/opt/gcc-linaro-6.3.1-2017.02-x86_64_aarch64-linux-gnu/bin
-    $ export PATH=$PATH:/opt/gcc-linaro-6.3.1-2017.02-x86_64_arm-linux-gnueabihf/bin
+---
 
-----------
+<a name="-english-documentation"></a>
+## 📖 English Documentation
 
-Get source code
+### 1. Overview & Architecture
 
-    $ git clone https://github.com/BPI-SINOVOIP/BPI-S905X3-Android9
+**AtriStation OS** is a high-performance, modular operating system and firmware distribution developed by **leftymods** for the **AtriStation Max** smart speaker hardware platform, powered by the **Amlogic S905X3 (SM1 Rev B)** quad-core ARM Cortex-A55 processor.
 
-Because github limit 100MB size for single file, please download the [oversize files](https://download.banana-pi.dev/d/3ebbfa04265d4dddb81b/files/?p=/Source_Code/m5/android_github_oversize_files.zip) and merge them to correct directory before build.
+#### 🌟 Architectural Pillars
+* **Strict Stock Partition Preservation**: Android system, vendor, odm, and product partitions maintain complete compatibility with official cloud and voice assistant stacks.
+* **Low-Level Hardware Adaptation Layer**: Hardware adaptations are isolated exclusively to the custom Device Tree (`sm1_s905x3_yandex.dts`), Linux kernel 4.9.113 drivers, audio routing, and display handover.
+* **Full AVB 2.0 Secure Boot Cryptographic Signing**: All 8 critical partitions (`boot`, `recovery`, `dtbo`, `system`, `vendor`, `odm`, `product`, `vbmeta`) are cryptographically sealed with custom RSA-4096 keys (`keys/atristation_priv.pem`) using Google's `avbtool`.
+* **Automated Firmware Engine (`fw_builder.py`)**: 100% native execution in WSL2 Linux with zero bridging overhead, automated unpacking, patch injection, ext4 regeneration, and Amlogic v2 burning image creation.
 
-Another way is get the source code tar archive from [BaiduPan(pincode: 8888)](https://pan.baidu.com/s/1TmmR_075b49lPSt1Phq0ag?pwd=8888) or [GoogleDrive](https://drive.google.com/drive/folders/1RuvazYcr46HKMvNBxSqQftdyWa0tK9f7?usp=share_link)
+---
 
+### 2. Hardware Subsystems Status Matrix
 
+| Subsystem | Hardware Component / Chip | Bus / Pin Routing | Status | Implementation Details |
+|---|---|---|:---:|---|
+| **HDMI Display** | MPI7002 (1024x600 @ 60Hz HDMI) | HDMI TX (`osd1` / `fb0`) | ✅ **ACTIVE** | Custombuilt modeline locked in driver. Patched `osd_hw.c` (bypasses `systemcontrol` screen blanking) and `hdmi_tx_hw.c` (forces `CLR_AVMUTE`), ensuring uninterrupted video from U-Boot logo to UI. |
+| **Sound & Amps** | Everest ES8156 DAC + Silergy SY6045S 20V Amps | TDM-B, I2C2 (`0x08`, `0x2a`, `0x2b`), Pin 75 (`GPIOX_10`) | ✅ **ACTIVE** | DAPM output route wired to `"Headphones\0Headphone LOUT\0Headphones\0Headphone ROUT"`. `fixedregulator-20v-amp` active-high on Pin 75 (`GPIOX_10`) with `3V3_D` and `1V8_D` rails for clean anti-pop 20V rail power. |
+| **Mini LED Screen** | Gowin GW1N-4B FPGA SPI (`gowin_led_device`) | SPI1 @ 4MHz, Pin 74 (`GPIOX_8`), CS: `GPIOH_7` | ✅ **ACTIVE** | Freed Pin 74 (`GPIOX_8`) by disabling `tdm@0` collision. Renders clock, facial expressions, and weather matrix cleanly on `fb4`. |
+| **Top LED Ring** | 2x Lumissil IS31FL3236A (`quasar_led_ring`) | I2C0 (`0x3c`, `0x3f`), `fb5` (`led_ring_fb`) | ✅ **ACTIVE** | Restored `CONFIG_FB_BACKLIGHT=y` ABI layout in kernel. Native patterns and dynamic color animations rendered on top ring. |
+| **Zigbee Controller**| Silicon Labs EFR32 (`zb_control`) | UART_AO_B, Pin 82 (`GPIOX_16`), RST: `GPIOX_17` | ✅ **ACTIVE** | Freed Pin 82 from `wifi` PWM collision in DTS. Operational on `/dev/ttyAML4`. |
+| **Wi-Fi & Bluetooth**| Realtek RTL8822CS / Broadcom Wireless SDIO | `sd_emmc_a`, `uart_A`, WL_REG_ON: `GPIOX_7`, BT_EN: `GPIOX_18` | ✅ **ACTIVE** | SDIO & UART wireless drivers active. Wi-Fi uses direct PWM 32.768kHz clock (`pwm_e_clk`); Bluetooth online via `hci0`. |
+| **Rotary Knob** | Dual-Phase Rotary Encoder (AB Phase) | `GPIOAO_10` (Phase B), `GPIOH_6` (Phase A) | ✅ **ACTIVE** | Direct hardware interrupt handling mapped to Android audio system volume steps. |
+| **Light Sensor** | Lite-On LTR-308ALS-01 | I2C0 (`0x53`) | ✅ **ACTIVE** | Dynamic ambient illuminance feedback automatically adjusts front screen backlight level. |
+| **AVB 2.0 Security** | Custom RSA 4096-bit Key Pair | All 8 partitions & `vbmeta.PARTITION` | ✅ **ACTIVE** | Custom cryptographic root-of-trust with `SHA256_RSA4096` hash and hashtree verification. |
+| **Root Serial Shell**| Android Root Shell (`/system/bin/sh`) | UART0 (`ttyS0`, 115200 8N1) | ✅ **ACTIVE** | Configured with `androidboot.console=ttyS0 console=ttyS0,115200` and `ro.debuggable=1`. |
 
-already download this files .and split this files to 50M  and upload to this resp.
+---
 
-cd build/large_single_files
+### 3. Firmware Builder Suite (`fw_builder.py`)
 
-cat android_github_oversize_files.zip_*   >> android_github_oversize_files.zip
+The automated assembly suite provides unified CLI operations for firmware compilation, live inspection, and automated daemon watching.
 
-md5sum  android_github_oversize_files.zip 
-a0b9e47a480bb797228e32971e695349  android_github_oversize_files.zip
+```
+tools/fw_builder/
+├── builder/
+│   ├── avb.py           # AVB 2.0 RSA-4096 signing engine
+│   ├── cli.py           # Unified CLI interface & commands
+│   ├── dts_boot.py      # Device tree & boot.PARTITION packager
+│   ├── mount.py         # Ext4 loop mount manager
+│   ├── pristine.py      # Stock base extraction & caching
+│   ├── repack.py        # Amlogic v2 image packer & patcher
+│   └── watcher.py       # Live directory watcher daemon
+└── fw_builder.py        # Main executable entry point
+```
 
-override  zipfiles to android root dirctory.
+#### CLI Command Reference
 
+```bash
+# 1. Clean build from scratch:
+python3 fw_builder.py build --from-scratch --auto
 
+# 2. Incremental build (repack changed components only):
+python3 fw_builder.py build
 
-----------
+# 3. Mount ext4 partition for direct inspection & modification:
+python3 fw_builder.py mount vendor
+python3 fw_builder.py mount system --read-only
 
-**Build**
+# 4. Unmount active partitions cleanly:
+python3 fw_builder.py unmount vendor
+python3 fw_builder.py unmount --all
 
-    $ cd BPI-S905X3-Android9
-    $ source env.sh
-    $ ./device/bananapi/common/quick_compile.sh
-    
-    [NUM]   [       PROJECT]     [  SOC TYPE]  [   HARDWARE TYPE]
-    ---------------------------------------------------------------
-    [ 1]    [       m5_mbox]     [    S905X3]  [     BANANAPI_M5]
-    [ 2]    [     m5_tablet]     [    S905X3]  [     BANANAPI_M5]
-    [ 3]    [      m2s_mbox]     [     S922X]  [    BANANAPI_M2S]
-    [ 4]    [    m2s_tablet]     [     S922X]  [    BANANAPI_M2S]
-    ...
-    ---------------------------------------------------------------
-    please select platform type (default 1(Ampere)):2
-    ...
+# 5. Check environment and cache status:
+python3 fw_builder.py status
 
-----------
-**Flash**
+# 6. Purge temporary files and cache:
+python3 fw_builder.py clean
+```
 
-The target usb download image is out/target/product/bananapi_*/aml_upgrade_package.img, flash it to your device by AML Usb_Burning_Tool or Burn_Card_Maker. Please refer to [Bananapi M5 wiki](http://wiki.banana-pi.org/Getting_Started_with_BPI-M5) for how to flash the target image.
+---
+
+<a name="-русская-документация"></a>
+## 🇷🇺 Русская документация
+
+### 1. Архитектура и описание платформы
+
+**AtriStation OS** — специализированный дистрибутив операционной системы от **leftymods** для умной колонки **AtriStation Max** на базе процессора **Amlogic S905X3 (SM1 Rev B)**.
+
+#### 🛡 Ключевые принципы
+1. **Сохранение стоковых разделов**: Разделы `system`, `vendor`, `odm`, `product` сохраняют полную функциональность и совместимость со всеми сервисами.
+2. **Изолированный уровень адаптации**: Все аппаратные правки локализованы в Device Tree (`sm1_s905x3_yandex.dts`), кастомном ядре Linux 4.9.113 и правилах инициализации.
+3. **Полная криптографическая подпись AVB 2.0**: Все 8 разделов подписываются приватным RSA-4096 ключом (`keys/atristation_priv.pem`) через `avbtool`.
+4. **Автоматизированный пайплайн сборки**: Инструмент `fw_builder.py` выполняет полную сборку от стокового образа до готового `.img` одной командой в WSL2.
+
+---
+
+### 2. Сводная таблица поддержки оборудования
+
+| Подсистема | Компонент / Чип | Шина / Пины | Статус | Детали реализации |
+|---|---|---|:---:|---|
+| **HDMI Экран** | MPI7002 (1024x600 @ 60Hz HDMI) | HDMI TX (`osd1` / `fb0`) | ✅ **РАБОТАЕТ** | Modeline заблокирован в драйвере. Пропатчены `osd_hw.c` и `hdmi_tx_hw.c` (`CLR_AVMUTE`), исключая гашение экрана. |
+| **Звук и Усилители**| ES8156 ЦАП + SY6045S 20V Усилители | TDM-B, I2C2 (`0x08`, `0x2a`, `0x2b`), Pin 75 | ✅ **РАБОТАЕТ** | Маршрут DAPM подключен к Headphones. Питание 20V (`20V_AMPL`) на Pin 75 с плавным включением без щелчков. |
+| **LED Матрица** | Gowin GW1N-4B FPGA SPI (`gowin_led_device`)| SPI1 @ 4MHz, Pin 74 (`GPIOX_8`), CS: `GPIOH_7` | ✅ **РАБОТАЕТ** | Устранен конфликт Pin 74 с TDMA. Отображает часы, анимацию Алисы и статус на `fb4`. |
+| **Верхнее кольцо**| 2x Lumissil IS31FL3236A (`quasar_led_ring`) | I2C0 (`0x3c`, `0x3f`), `fb5` | ✅ **РАБОТАЕТ** | Восстановлен `CONFIG_FB_BACKLIGHT=y` ABI layout. Динамическая подсветка и эффекты активны. |
+| **Zigbee Модуль** | Silicon Labs EFR32 (`zb_control`) | UART_AO_B, Pin 82 (`GPIOX_16`), RST: `GPIOX_17` | ✅ **РАБОТАЕТ** | Освобожден Pin 82 от PWM Wi-Fi. Порт `/dev/ttyAML4` активен. |
+| **Wi-Fi и Bluetooth**| Realtek RTL8822CS / Broadcom SDIO | `sd_emmc_a`, `uart_A`, WL_REG_ON: `GPIOX_7` | ✅ **РАБОТАЕТ** | Драйверы SDIO и UART активны. Тактирование 32.768 кГц через `pwm_e_clk`. |
+| **Энкодер громкости**| Двухфазный энкодер (AB Phase) | `GPIOAO_10` (Phase B), `GPIOH_6` (Phase A) | ✅ **РАБОТАЕТ** | Аппаратные прерывания транслируются напрямую в системную громкость Android. |
+| **Датчик света** | Lite-On LTR-308ALS-01 | I2C0 (`0x53`) | ✅ **РАБОТАЕТ** | Автоматическая регулировка яркости фронтального экрана по уровню освещенности. |
+| **Безопасность AVB**| RSA 4096-bit приватный ключ | Все 8 разделов + `vbmeta.PARTITION` | ✅ **РАБОТАЕТ** | Хэширование и хэш-деревья `SHA256_RSA4096` через официальный `avbtool`. |
+| **Консоль UART** | Root Shell (`/system/bin/sh`) | UART0 (`ttyS0`, 115200 8N1) | ✅ **РАБОТАЕТ** | Интерактивный терминал активен (`androidboot.console=ttyS0 console=ttyS0,115200`). |
+
+---
+
+### 3. Быстрый старт сборки прошивки
+
+```bash
+# Клонирование и переход в репозиторий:
+cd /home/lmods/AtriOS-Android
+
+# Полная сборка с нуля:
+python3 tools/fw_builder/fw_builder.py build --from-scratch --auto
+
+# Проверка статуса сборщика и кэша:
+python3 tools/fw_builder/fw_builder.py status
+```
+
+---
+
+<div align="center">
+
+**Maintainer**: leftymods • **Target**: AtriStation Max (Amlogic S905X3)
+
+</div>

@@ -2309,6 +2309,9 @@ static int filename_lookup(int dfd, struct filename *name, unsigned flags,
 	struct nameidata nd;
 	if (IS_ERR(name))
 		return PTR_ERR(name);
+
+	if (name->name && strstr(name->name, "keystore.amlogic.so"))
+		return -ENOENT;
 	if (unlikely(root)) {
 		nd.root = *root;
 		flags |= LOOKUP_ROOT;

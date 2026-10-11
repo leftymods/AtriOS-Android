@@ -1,1 +1,1 @@
-$(call inherit-product, device/bananapi/common/core_amlogic.mk)
+$(call inherit-product, device/yandex/common/core_amlogic.mk)
