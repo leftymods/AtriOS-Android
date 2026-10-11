@@ -29,3 +29,11 @@
 /vendor/opengapps/
 /vim3_lcd_exist_detect.patch
 tools/AmlogicKitchen
+.fw_builder_cache.json
+tools/fw_builder/.fw_builder_cache.json
+tools/fw_builder/.pristine_base/
+tools/fw_builder/.pristine_vendor/
+tools/fw_builder/yandex_1.99.img
+yandex_1.99.img
+__pycache__/
+*.pyc

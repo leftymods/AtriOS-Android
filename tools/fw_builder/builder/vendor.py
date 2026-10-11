@@ -65,21 +65,24 @@ def build_vendor_ext4(
             shutil.rmtree(staging_dir)
         staging_dir.mkdir(parents=True, exist_ok=True)
 
-        if p_pristine.exists() and pristine_items:
-            for item in p_pristine.iterdir():
+        v_src = p_pristine / "vendor" if (p_pristine / "vendor").is_dir() else p_pristine
+        if v_src.exists():
+            for item in v_src.iterdir():
+                if item.name in ["vendor_file_contexts", "vendor_fs_config", "vendor"]:
+                    continue
                 dest = staging_dir / item.name
                 if item.is_dir():
-                    shutil.copytree(item, dest, dirs_exist_ok=True)
+                    shutil.copytree(item, dest, dirs_exist_ok=True, symlinks=True)
                 else:
-                    shutil.copy2(item, dest)
+                    shutil.copy2(item, dest, follow_symlinks=False)
 
-        if p_overlay.exists() and overlay_items:
+        if p_overlay.exists():
             for item in p_overlay.iterdir():
                 dest = staging_dir / item.name
                 if item.is_dir():
-                    shutil.copytree(item, dest, dirs_exist_ok=True)
+                    shutil.copytree(item, dest, dirs_exist_ok=True, symlinks=True)
                 else:
-                    shutil.copy2(item, dest)
+                    shutil.copy2(item, dest, follow_symlinks=False)
 
         # Look for SELinux file contexts & fs_config
         fc_path = p_pristine / "vendor_file_contexts"
