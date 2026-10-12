@@ -55,13 +55,16 @@ if [ -f "$ROOTFS_TAR" ]; then
     mkdir -p "$TOOLS_DIR/overlay/system"
     rm -rf "$TOOLS_DIR/overlay/system"/* 2>/dev/null || true
     tar -xf "$ROOTFS_TAR" -C "$TOOLS_DIR/overlay/system"
+    ln -sf sbin/init "$TOOLS_DIR/overlay/system/init"
+    chmod 755 "$TOOLS_DIR/overlay/system/lib/ld-"* 2>/dev/null || true
+    chmod 755 "$TOOLS_DIR/overlay/system/bin/busybox" 2>/dev/null || true
 
-    echo "root=/dev/mmcblk0p18 rootfstype=ext4 rw rootwait skip_initramfs init=/sbin/init androidboot.selinux=permissive enforcing=0 androidboot.hardware=amlogic androidboot.hardware.amlogic_dt_id=g12a_s905x2_rev376f console=ttyS0,115200 androidboot.console=ttyS0 no_console_suspend earlyprintk=aml-uart,0xff803000" > "$TOOLS_DIR/overlay/boot/cmdline.txt"
+    echo "root=/dev/mmcblk0p18 rootfstype=ext4 rw rootwait skip_initramfs init=/init selinux=0 enforcing=0 androidboot.selinux=permissive androidboot.hardware=amlogic androidboot.hardware.amlogic_dt_id=g12a_s905x2_rev376f console=ttyS0,115200 androidboot.console=ttyS0 no_console_suspend earlyprintk=aml-uart,0xff803000" > "$TOOLS_DIR/overlay/boot/cmdline.txt"
 
     mkdir -p "$TOOLS_DIR/staging"
     if [ -x "$MAKE_EXT4FS" ]; then
         echo "Building raw ext4 system.PARTITION (1.44 GB)..."
-        "$MAKE_EXT4FS" -l 1551892480 -a system "$TOOLS_DIR/staging/system.PARTITION" "$TOOLS_DIR/overlay/system"
+        "$MAKE_EXT4FS" -l 1551892480 "$TOOLS_DIR/staging/system.PARTITION" "$TOOLS_DIR/overlay/system"
     fi
 fi
 

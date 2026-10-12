@@ -103,6 +103,18 @@ def build_vendor_ext4(
         cmd.extend([str(p_out), str(staging_dir)])
 
         res = subprocess.run(cmd, capture_output=True, text=True)
+        if res.returncode != 0 and fs_path.exists():
+            # If canned fs_config failed because of new overlay files, retry without -C
+            cmd_retry = [
+                make_ext4fs_bin,
+                "-l", str(partition_size_bytes),
+                "-a", "vendor",
+            ]
+            if fc_path.exists():
+                cmd_retry.extend(["-S", str(fc_path)])
+            cmd_retry.extend([str(p_out), str(staging_dir)])
+            res = subprocess.run(cmd_retry, capture_output=True, text=True)
+
         # Cleanup staging
         shutil.rmtree(staging_dir, ignore_errors=True)
 

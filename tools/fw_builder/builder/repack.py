@@ -296,6 +296,11 @@ def _rebuild_dirty_components(
         except Exception as exc:
             if verbose:
                 print(f"[BUILD] Note on vendor rebuild: {exc}")
+            stock_v = workspace / ".pristine_base" / "vendor.PARTITION"
+            if not stock_v.exists():
+                stock_v = PROJECT_ROOT / ".pristine_base" / "vendor.PARTITION"
+            if stock_v.exists() and (not out_vendor.exists() or out_vendor.stat().st_size == 0):
+                shutil.copy2(str(stock_v), str(out_vendor))
 
     # 2. DTS & Boot
     dtb_rebuilt = False
@@ -426,31 +431,18 @@ def build_image(
     staging_dir = workspace / "staging"
     staging_dir.mkdir(parents=True, exist_ok=True)
 
-    # Prefer local workspace staging or pristine_base, fallback to external repack_dir only if present
-    if any((staging_dir / cp).exists() for cp in CRITICAL_PARTITIONS):
-        source_dir = staging_dir
-    elif pristine_dir.exists() and any((pristine_dir / cp).exists() for cp in CRITICAL_PARTITIONS):
-        source_dir = pristine_dir
-    else:
-        source_dir = pristine_dir
-
-    if not source_dir.exists():
-        return 1, f"Missing partition source directory: {source_dir}"
-
-    for cp in CRITICAL_PARTITIONS:
-        cp_path = source_dir / cp
-        if not cp_path.exists() and not (staging_dir / cp).exists():
-            return 1, f"Missing critical partition: {cp}"
-
-    # 4. Populate Staging Directory
-    if source_dir.resolve() != staging_dir.resolve():
+    # Populate staging from pristine_base first for any missing stock items
+    if pristine_dir.exists():
         for item_name in STOCK_21_ITEMS:
-            src_item = source_dir / item_name
+            src_item = pristine_dir / item_name
             dst_item = staging_dir / item_name
-            if src_item.exists() and (
-                not dst_item.exists() or src_item.stat().st_mtime > dst_item.stat().st_mtime
-            ):
+            if src_item.exists() and not dst_item.exists():
                 shutil.copy2(str(src_item), str(dst_item))
+
+    # Verify critical partitions exist in staging or pristine_dir
+    for cp in CRITICAL_PARTITIONS:
+        if not (staging_dir / cp).exists() and not (pristine_dir / cp).exists():
+            return 1, f"Missing critical partition: {cp}"
 
     # 5. Rebuild Dirty Components
     _rebuild_dirty_components(workspace, staging_dir, dirty_map, verbose=verbose)

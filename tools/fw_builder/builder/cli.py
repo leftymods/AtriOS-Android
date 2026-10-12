@@ -219,9 +219,9 @@ def handle_build(args: argparse.Namespace) -> int:
     """Handle build subcommand."""
     log_info("Executing build subcommand...")
 
-    # Check stock base image
+    # Check stock base image (only required if pristine cache is not already populated)
     base_img = DEFAULT_BASE_IMG
-    if not base_img.exists():
+    if not base_img.exists() and (args.from_scratch or not DEFAULT_CACHE_DIR.exists()):
         log_error(f"Base firmware image missing: {base_img}")
         return EXIT_MISSING_TOOL
 
