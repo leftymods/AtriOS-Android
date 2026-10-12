@@ -35,23 +35,16 @@ STOCK_21_ITEMS = [
     "aml_sdc_burn.ini",
     "boot.PARTITION",
     "bootloader.PARTITION",
-    "dtbo.PARTITION",
     "logo.PARTITION",
     "meson1.dtb",
     "meson1_ENC.dtb",
-    "odm.PARTITION",
     "platform.conf",
-    "product.PARTITION",
-    "recovery.PARTITION",
     "system.PARTITION",
-    "vbmeta.PARTITION",
-    "vendor.PARTITION",
 ]
 
 CRITICAL_PARTITIONS = [
     "boot.PARTITION",
     "system.PARTITION",
-    "vendor.PARTITION",
 ]
 
 DEFAULT_CACHE_NAME = ".fw_builder_cache.json"
@@ -157,10 +150,10 @@ def check_dirty_state(
     cache_file = workspace / DEFAULT_CACHE_NAME
     cached = load_cache(cache_file)
 
-    dirty_map: Dict[str, bool] = {"vendor": False, "dts": False, "boot": False}
+    dirty_map: Dict[str, bool] = {"dts": False, "boot": False}
     current_partitions: Dict[str, Any] = {}
 
-    for comp in ["vendor", "dts", "boot"]:
+    for comp in ["dts", "boot"]:
         comp_dir = workspace / "overlay" / comp
         d_hash, d_mtime, d_files = compute_dir_state(comp_dir)
         current_partitions[comp] = {
@@ -177,7 +170,7 @@ def check_dirty_state(
         return True, dirty_map, current_partitions
 
     cached_parts = cached.get("partitions", {})
-    for comp in ["vendor", "dts", "boot"]:
+    for comp in ["dts", "boot"]:
         c_info = cached_parts.get(comp)
         curr_info = current_partitions[comp]
         if (
@@ -277,32 +270,10 @@ def _rebuild_dirty_components(
     workspace: Path, staging_dir: Path, dirty_map: Dict[str, bool], verbose: bool = False
 ) -> Tuple[bool, str]:
     """Rebuild dirty components according to dependency graph:
-    - dirty vendor -> vendor.build_vendor_ext4()
     - dirty dts -> compile DTS, multi-DTB (_aml_dtb, meson1, meson1_ENC), rebuild boot.PARTITION
     - dirty boot -> rebuild boot.PARTITION
     """
-    # 1. Vendor
-    if dirty_map.get("vendor", False):
-        if verbose:
-            print("[BUILD] Overlay vendor changed. Rebuilding vendor.PARTITION...")
-        try:
-            from builder.vendor import build_vendor_ext4
-            overlay_vendor = workspace / "overlay" / "vendor"
-            pristine_vendor = workspace / ".pristine_vendor"
-            if not pristine_vendor.exists():
-                pristine_vendor = PROJECT_ROOT / ".pristine_vendor"
-            out_vendor = staging_dir / "vendor.PARTITION"
-            build_vendor_ext4(str(overlay_vendor), str(pristine_vendor), str(out_vendor))
-        except Exception as exc:
-            if verbose:
-                print(f"[BUILD] Note on vendor rebuild: {exc}")
-            stock_v = workspace / ".pristine_base" / "vendor.PARTITION"
-            if not stock_v.exists():
-                stock_v = PROJECT_ROOT / ".pristine_base" / "vendor.PARTITION"
-            if stock_v.exists() and (not out_vendor.exists() or out_vendor.stat().st_size == 0):
-                shutil.copy2(str(stock_v), str(out_vendor))
-
-    # 2. DTS & Boot
+    # 1. DTS & Boot
     dtb_rebuilt = False
     tmp_dtb = staging_dir / "sm1_s905x3_yandex.dtb"
     if dirty_map.get("dts", False):
@@ -447,15 +418,13 @@ def build_image(
     # 5. Rebuild Dirty Components
     _rebuild_dirty_components(workspace, staging_dir, dirty_map, verbose=verbose)
 
-    # 6. Full AVB 2.0 Signing
-    if not is_test_env:
-        _sign_staging(staging_dir, workspace, verbose=verbose)
+    # 6. AVB signing skipped for pure Linux build (avb2: 0, permissive mode)
 
     # 7. Package Image
     if not is_test_env and ampack_bin and staging_dir.exists():
         if verbose:
             print(f"[BUILD] Packaging firmware image via ampack: {out_img_path}...")
-        cmd = [ampack_bin, "pack", str(staging_dir), str(out_img_path)]
+        cmd = [ampack_bin, "pack", "--out-ver", "v2", "--verify", str(staging_dir), str(out_img_path)]
         res = subprocess.run(cmd, capture_output=True, text=True)
         if res.returncode != 0:
             return res.returncode, f"ampack failed: {res.stderr}"

@@ -31,29 +31,23 @@ IMGEXTRACTOR_CANDIDATES = [
     PROJECT_ROOT.parent.parent / "tools" / "bin" / "imgextractor.py",
 ]
 
-# The complete 21 items contained within stock yandex_1.99.img
+# Essential items required for AtriOS Linux S905X3 firmware package
 STOCK_21_ITEMS: Dict[str, int] = {
-    "DDR.USB": 1553264,
-    "DDR_ENC.USB": 1553264,
-    "UBOOT.USB": 1553264,
-    "UBOOT_ENC.USB": 1553264,
-    "_aml_dtb.PARTITION": 128032,
-    "aml_sdc_burn.UBOOT": 1553264,
-    "aml_sdc_burn.UBOOT.ENC": 1553264,
+    "DDR.USB": 1537392,
+    "DDR_ENC.USB": 1538416,
+    "UBOOT.USB": 1537392,
+    "UBOOT_ENC.USB": 1538416,
+    "_aml_dtb.PARTITION": 96256,
+    "aml_sdc_burn.UBOOT": 1537904,
+    "aml_sdc_burn.UBOOT.ENC": 1538416,
     "aml_sdc_burn.ini": 602,
     "boot.PARTITION": 16777216,
-    "bootloader.PARTITION": 1553264,
-    "dtbo.PARTITION": 8388608,
+    "bootloader.PARTITION": 1537392,
     "logo.PARTITION": 1338688,
-    "meson1.dtb": 128032,
-    "meson1_ENC.dtb": 128032,
-    "odm.PARTITION": 134217728,
+    "meson1.dtb": 96256,
+    "meson1_ENC.dtb": 96256,
     "platform.conf": 155,
-    "product.PARTITION": 134217728,
-    "recovery.PARTITION": 25165824,
     "system.PARTITION": 1551892480,
-    "vbmeta.PARTITION": 4096,
-    "vendor.PARTITION": 536870912,
 }
 
 STOCK_SHA1_HASHES: Dict[str, str] = {
@@ -72,10 +66,6 @@ STOCK_SHA1_HASHES: Dict[str, str] = {
 
 IMMUTABLE_STOCK_PARTITIONS: List[str] = [
     "system.PARTITION",
-    "odm.PARTITION",
-    "product.PARTITION",
-    "recovery.PARTITION",
-    "dtbo.PARTITION",
     "logo.PARTITION",
     "platform.conf",
 ]

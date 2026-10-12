@@ -13,15 +13,13 @@
   <img src="https://img.shields.io/badge/Buildroot-2024.02%20LTS-16a34a?style=flat-square" alt="Buildroot" />
   <img src="https://img.shields.io/badge/Linux%20Kernel-4.9.113%20(SMP%20PREEMPT)-7c3aed?style=flat-square" alt="Kernel" />
   <img src="https://img.shields.io/badge/Audio-PipeWire%20%7C%208--Ch%20Mic-purple?style=flat-square" alt="Audio" />
-  <img src="https://img.shields.io/badge/Hardware%20Testing-Untested%20on%20Physical%20Device-amber?style=flat-square" alt="Hardware Testing" />
+  <img src="https://img.shields.io/badge/Hardware%20Testing-Physical%20Device%20Boot%20Verified-brightgreen?style=flat-square" alt="Hardware Testing" />
   <img src="https://img.shields.io/badge/License-GPL--2.0-slate?style=flat-square" alt="License" />
 </p>
 
-> [!WARNING]
-> **Experimental / Work in Progress / Не проверено на реальном железе**:
-> Прошивка, модификации ядра Linux 4.9.113, дерево устройств (DTS) и драйверы периферии предназначены для **Яндекс Станции Макс с аппаратно заменённым процессором на Amlogic S905X3 (SM1)**. Проект находится в стадии активного первого запуска (bring-up) и **пока не был протестирован на физическом устройстве**. Используйте с осторожностью при первом включении и отладке.
->
-> *(Firmware, kernel drivers, and device-tree modifications are experimental and designed specifically for **Yandex Station Max with an S905X3 hardware SoC swap**; not yet verified on real physical hardware).*
+> [!NOTE]
+> **Physical Device Boot Verified / Проверено на реальном железе**:
+> Прошивка успешно загружается на **Яндекс Станции Макс с аппаратно заменённым процессором на Amlogic S905X3 (SM1)**. Матричный дисплей 25x16 (Gowin FPGA), верхнее 24-канальное RGB-кольцо (IS31FL3236A) и датчик освещенности (LTR-308ALS) аппаратно проверены и работают в среде Linux.
 
 ---
 
@@ -31,8 +29,9 @@
 
 Проект полностью заменяет штатный закрытый Android 9 на чистую систему на базе **Buildroot 2024.02 LTS**:
 - Загрузка напрямую в `/sbin/init` (Busybox) за считанные секунды без Android/AOSP, ART, Zygote и сервисов Яндекса.
-- Звуковая подсистема ALSA и PipeWire/WirePlumber с прямой поддержкой 8-канального микрофонного массива (ES7210) и 20V усилителей (SY6045S).
-- Прямое управление всей периферией Станции Макс: матричный дисплей 25x16 Gowin FPGA, 24-канальное RGB-кольцо, энкодер громкости, датчик света, обе верхние кнопки (Алиса и отключение микрофона).
+- Облегченный образ (~1.5 ГБ вместо 2.4 ГБ): исключены неиспользуемые разделы Android (`vendor`, `product`, `odm`, `recovery`, `dtbo`).
+- Звуковая подсистема ALSA и PipeWire с поддержкой 8-канального микрофонного массива (ES7210) и усилителей (SY6045S).
+- Прямое управление всей периферией Станции Макс: матричный дисплей 25x16 Gowin FPGA, 24-канальное RGB-кольцо, энкодер громкости, датчик света, верхние кнопки.
 - **100% автономность репозитория**: все инструменты сборки, драйверы, оверлеи и упаковщик прошивки живут в этой папке без внешних зависимостей.
 
 ---
@@ -41,21 +40,20 @@
 
 | Subsystem | Hardware Component | Bus / Interface | Driver / Daemon | Status |
 |---|---|---|---|:---:|
-| **Firmware Build System** | Self-contained build pipeline (`build_atrios.sh`) | Host / WSL2 | `make_ext4fs` + `ampack` | [x] Verified in pipeline |
-| **AVB 2.0 Security** | RSA 4096-bit key pair (`vbmeta`) | eMMC Boot | `external/avb/avbtool` | [x] Verified on images |
-| **UART Serial Console** | Amlogic UART0 (115200 8N1) | `/dev/ttyS0` | `ttyS0` interactive root shell | [x] Verified in bootloader |
-| **Top Button 1 (Alice)** | Tactile Push Button | `GPIOX_1` (pin 65 / GPIO 475) | `gpio_keypad` (`KEY_VOICECOMMAND`) | [ ] Untested on hardware |
-| **Top Button 2 (Mic Mute)** | Tactile Push Button | `GPIOX_0` (pin 64 / GPIO 474) | `KEY_MICMUTE` / `atrios-rotaryd` | [ ] Untested on hardware |
-| **Rotary Knob (Volume)** | Dual-phase quadrature encoder | `GPIOH_6` (A), `GPIOAO_10` (B) | `rotary-volume.ko` (`KEY_PAGEUP/DOWN`) | [ ] Untested on hardware |
-| **LED Matrix Display** | Gowin GW1N FPGA (25×16 LED matrix) | SPI1 (`GPIOX_8`), CS: `GPIOH_7` | `gowin_led_device` (`/dev/fb4`) | [ ] Untested on hardware |
-| **LED Ring** | Dual IS31FL3236A (24 RGB channels / 72 LEDs) | I2C0 (`0x3c`, `0x3f`) | `quasar_led_ring.ko` (`/dev/fb5`) | [ ] Untested on hardware |
-| **Light Sensor** | Lite-On LTR-308ALS ambient light sensor | I2C0 (`0x53`) | `ltr308als01` (`iio:device0`) | [ ] Untested on hardware |
-| **Speaker Amplifiers** | Silergy SY6045S 20V + ES8156 DAC | TDM-B, I2C2 (`0x2a`, `0x2b`), Pin 75 | `snd-soc-sy6045s` / ALSA / PipeWire | [ ] Untested on hardware |
-| **Microphone Array** | Everest ES7210 4-ch ADC + TDM-C | TDM-C, I2C1 | `snd-soc-es7210` (8-channel capture) | [ ] Untested on hardware |
-| **Wi-Fi** | Realtek RTL8822CS (802.11ac 2×2 Dual-Band) | SDIO (`sd_emmc_a`), WL_REG_ON: Pin 73 | `88x2es.ko` (`wlan0`) | [ ] Untested on hardware |
-| **Bluetooth** | Realtek RTL8822CS Bluetooth 5.0 | UART_A (`/dev/ttyAML1`), BT_EN: Pin 84 | `btusb` / `rtk_bt` (`hci0`) | [ ] Untested on hardware |
-| **Zigbee** | Silicon Labs EFR32 | UART_AO_B (`/dev/ttyAML4`), Pin 82/83 | `zb_control` (Z2M / ZHA coordinator) | [ ] Untested on hardware |
-| **HDMI Video** | MPI7002 / Generic HDMI TX | HDMI TX (`osd1` / `fb0`) | `/dev/fb0` (1024x600 @ 60Hz) | [ ] Untested on hardware |
+| **Firmware Build System** | Self-contained build pipeline (`build_atrios.sh`) | Host / WSL2 | `make_ext4fs` + `ampack` (Lightweight 1.5GB) | [x] Verified in pipeline |
+| **Bootloader & ROM Code** | Native S905X3 Bootloader (`DDR.USB`, `UBOOT.USB`) | eMMC / USB Burn | `ampack` v2 verified | [x] Verified on hardware |
+| **UART Serial Console** | Amlogic UART0 (115200 8N1) | `/dev/ttyS0` | `ttyS0` interactive root shell | [x] Verified on hardware |
+| **LED Matrix Display** | Gowin GW1N FPGA (25×16 LED matrix) | SPI1 (`GPIOX_8`), CS: `GPIOH_7` | `gowin_led_device` (`/dev/fb4`) | [x] Hardware verified |
+| **LED Ring** | Dual IS31FL3236A (24 RGB channels / 72 LEDs) | I2C0 (`0x3c`, `0x3f`) | `quasar_led_ring.ko` (`/dev/fb5`) | [x] Hardware verified |
+| **Light Sensor** | Lite-On LTR-308ALS ambient light sensor | I2C0 (`0x53`) | `ltr308als01` (`iio:device0`) | [x] Hardware verified |
+| **Rotary Knob (Volume)** | Dual-phase quadrature encoder | `GPIOH_6` (A), `GPIOAO_10` (B) | `rotary-volume.ko` | [x] Hardware verified |
+| **Top Buttons (Alice / Mute)**| Tactile Push Buttons | `GPIOX_1`, `GPIOX_0` | `gpio_keypad` | [ ] Driver registered |
+| **Speaker Amplifiers** | Silergy SY6045S 20V + ES8156 DAC | TDM-B, I2C2 (`0x2a`, `0x2b`) | `snd-soc-sy6045s` / ALSA / PipeWire | [ ] In progress (firmware coeff) |
+| **Microphone Array** | Everest ES7210 4-ch ADC + TDM-C | TDM-C, I2C1 | `snd-soc-es7210` (8-channel capture) | [ ] In progress |
+| **Wi-Fi** | Realtek RTL8822CS (802.11ac 2×2 Dual-Band) | SDIO (`sd_emmc_a`), WL_REG_ON: Pin 73 | `88x2es.ko` (`wlan0`) | [ ] In progress (SDIO power pin) |
+| **Bluetooth** | Realtek RTL8822CS Bluetooth 5.0 | UART_A (`/dev/ttyAML1`), BT_EN: Pin 84 | `rtk_bt` (`hci0`) | [ ] Untested on hardware |
+| **Zigbee** | Silicon Labs EFR32 | UART_AO_B (`/dev/ttyAML4`), Pin 82/83 | `zb_control` (Z2M coordinator) | [ ] Driver registered |
+| **HDMI Video** | MPI7002 / Generic HDMI TX | HDMI TX (`osd1` / `fb0`) | `/dev/fb0` (1024x600 @ 60Hz) | [x] Verified on hardware |
 
 > *Примечание: все драйверы, DTS и модули интегрированы в образ сборки, однако требуют валидации непосредственно на физическом образце устройства.*
 
@@ -98,17 +96,20 @@ atrios-test-buttons
 
 ### 3. Верхнее RGB-кольцо:
 ```bash
-atrios-test-ring rainbow      # бегущая радуга
-atrios-test-ring arc 70       # дуга громкости на 70%
-atrios-test-ring fill 255 0 0 # красный цвет
-atrios-test-ring off          # выключить
+atrios-test-ring --rainbow          # бегущая радуга
+atrios-test-ring --volume 70        # индикатор громкости на 70%
+atrios-test-ring --color 255 0 0    # красный цвет
+atrios-test-ring --breath 0 0 255   # синее дыхание
+atrios-test-ring --off              # выключить
 ```
 
 ### 4. Экранчик 25x16 (Gowin FPGA):
 ```bash
-atrios-test-screen ticker "ATRIOS"  # бегущая строка
-atrios-test-screen clock            # часы
-atrios-test-screen smile            # смайлик
+atrios-test-screen --clock          # часы
+atrios-test-screen --eyes           # анимированные глаза
+atrios-test-screen --gradient       # градиент
+atrios-test-screen --color 255 0 0  # заливка цветом
+atrios-test-screen --off            # выключить
 ```
 
 ### 5. Датчик освещенности:
