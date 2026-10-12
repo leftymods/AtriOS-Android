@@ -1,15 +1,15 @@
-# 🚀 AtriStation OS — AtriStation Max (Amlogic S905X3 / SM1)
+# 🚀 AtriOS Linux — Yandex Station 2 / Max (Amlogic S905X3 / SM1)
 
 <div align="center">
 
-![Platform](https://img.shields.io/badge/Platform-Amlogic%20S905X3%20%28SM1%20Rev%20B%29-blue.svg?style=for-the-badge)
-![Android](https://img.shields.io/badge/Android-9.0%20Pie%20%28API%2028%29-green.svg?style=for-the-badge)
+![Platform](https://img.shields.io/badge/Platform-Amlogic%20S905X3%20%28SM1%29-blue.svg?style=for-the-badge)
+![OS](https://img.shields.io/badge/OS-AtriOS%20Linux%20%28Buildroot%202024.02%29-green.svg?style=for-the-badge)
 ![Kernel](https://img.shields.io/badge/Kernel-Linux%204.9.113%20%28SMP%20PREEMPT%29-orange.svg?style=for-the-badge)
+![Audio](https://img.shields.io/badge/Audio-PipeWire%20%2F%20ALSA%208--Ch-purple.svg?style=for-the-badge)
 ![Security](https://img.shields.io/badge/AVB%202.0-RSA%204096--bit-red.svg?style=for-the-badge)
-![Manufacturer](https://img.shields.io/badge/Manufacturer-leftymods-purple.svg?style=for-the-badge)
-![Device](https://img.shields.io/badge/Device-AtriStation%20Max-cyan.svg?style=for-the-badge)
+![Maintainer](https://img.shields.io/badge/Maintainer-leftymods-cyan.svg?style=for-the-badge)
 
-**Official custom firmware distribution for AtriStation Max hardware platform by leftymods.**
+**Clean, high-performance embedded Linux distribution (Buildroot LTS) replacing stock Android on Yandex Station 2 / Station Max hardware.**
 
 [English Documentation](#-english-documentation) • [Русская документация](#-русская-документация)
 
@@ -22,125 +22,178 @@
 
 ### 1. Overview & Architecture
 
-**AtriStation OS** is a high-performance, modular operating system and firmware distribution developed by **leftymods** for the **AtriStation Max** smart speaker hardware platform, powered by the **Amlogic S905X3 (SM1 Rev B)** quad-core ARM Cortex-A55 processor.
+**AtriOS Linux** is a modern, lightweight embedded Linux distribution developed by **leftymods** for the **Yandex Station 2** and **Station Max** smart speaker hardware platform, powered by the **Amlogic S905X3 (SM1)** quad-core ARM Cortex-A55 SoC.
 
-#### 🌟 Architectural Pillars
-* **Strict Stock Partition Preservation**: Android system, vendor, odm, and product partitions maintain complete compatibility with official cloud and voice assistant stacks.
-* **Low-Level Hardware Adaptation Layer**: Hardware adaptations are isolated exclusively to the custom Device Tree (`sm1_s905x3_yandex.dts`), Linux kernel 4.9.113 drivers, audio routing, and display handover.
-* **Full AVB 2.0 Secure Boot Cryptographic Signing**: All 8 critical partitions (`boot`, `recovery`, `dtbo`, `system`, `vendor`, `odm`, `product`, `vbmeta`) are cryptographically sealed with custom RSA-4096 keys (`keys/atristation_priv.pem`) using Google's `avbtool`.
-* **Automated Firmware Engine (`fw_builder.py`)**: 100% native execution in WSL2 Linux with zero bridging overhead, automated unpacking, patch injection, ext4 regeneration, and Amlogic v2 burning image creation.
+Instead of heavy and locked-down Android userspace frameworks, AtriOS boots directly into an optimized **Buildroot 2024.02 LTS** environment with native ALSA/PipeWire audio, full reverse-engineered hardware control, and dedicated system daemons.
 
----
-
-### 2. Hardware Subsystems Status Matrix
-
-| Subsystem | Hardware Component / Chip | Bus / Pin Routing | Status | Implementation Details |
-|---|---|---|:---:|---|
-| **HDMI Display** | MPI7002 (1024x600 @ 60Hz HDMI) | HDMI TX (`osd1` / `fb0`) | ✅ **ACTIVE** | Custombuilt modeline locked in driver. Patched `osd_hw.c` (bypasses `systemcontrol` screen blanking) and `hdmi_tx_hw.c` (forces `CLR_AVMUTE`), ensuring uninterrupted video from U-Boot logo to UI. |
-| **Sound & Amps** | Everest ES8156 DAC + Silergy SY6045S 20V Amps | TDM-B, I2C2 (`0x08`, `0x2a`, `0x2b`), Pin 75 (`GPIOX_10`) | ✅ **ACTIVE** | DAPM output route wired to `"Headphones\0Headphone LOUT\0Headphones\0Headphone ROUT"`. `fixedregulator-20v-amp` active-high on Pin 75 (`GPIOX_10`) with `3V3_D` and `1V8_D` rails for clean anti-pop 20V rail power. |
-| **Mini LED Screen** | Gowin GW1N-4B FPGA SPI (`gowin_led_device`) | SPI1 @ 4MHz, Pin 74 (`GPIOX_8`), CS: `GPIOH_7` | ✅ **ACTIVE** | Freed Pin 74 (`GPIOX_8`) by disabling `tdm@0` collision. Renders clock, facial expressions, and weather matrix cleanly on `fb4`. |
-| **Top LED Ring** | 2x Lumissil IS31FL3236A (`quasar_led_ring`) | I2C0 (`0x3c`, `0x3f`), `fb5` (`led_ring_fb`) | ✅ **ACTIVE** | Restored `CONFIG_FB_BACKLIGHT=y` ABI layout in kernel. Native patterns and dynamic color animations rendered on top ring. |
-| **Zigbee Controller**| Silicon Labs EFR32 (`zb_control`) | UART_AO_B, Pin 82 (`GPIOX_16`), RST: `GPIOX_17` | ✅ **ACTIVE** | Freed Pin 82 from `wifi` PWM collision in DTS. Operational on `/dev/ttyAML4`. |
-| **Wi-Fi & Bluetooth**| Realtek RTL8822CS / Broadcom Wireless SDIO | `sd_emmc_a`, `uart_A`, WL_REG_ON: `GPIOX_7`, BT_EN: `GPIOX_18` | ✅ **ACTIVE** | SDIO & UART wireless drivers active. Wi-Fi uses direct PWM 32.768kHz clock (`pwm_e_clk`); Bluetooth online via `hci0`. |
-| **Rotary Knob** | Dual-Phase Rotary Encoder (AB Phase) | `GPIOAO_10` (Phase B), `GPIOH_6` (Phase A) | ✅ **ACTIVE** | Direct hardware interrupt handling mapped to Android audio system volume steps. |
-| **Light Sensor** | Lite-On LTR-308ALS-01 | I2C0 (`0x53`) | ✅ **ACTIVE** | Dynamic ambient illuminance feedback automatically adjusts front screen backlight level. |
-| **AVB 2.0 Security** | Custom RSA 4096-bit Key Pair | All 8 partitions & `vbmeta.PARTITION` | ✅ **ACTIVE** | Custom cryptographic root-of-trust with `SHA256_RSA4096` hash and hashtree verification. |
-| **Root Serial Shell**| Android Root Shell (`/system/bin/sh`) | UART0 (`ttyS0`, 115200 8N1) | ✅ **ACTIVE** | Configured with `androidboot.console=ttyS0 console=ttyS0,115200` and `ro.debuggable=1`. |
+#### 🌟 Architectural Highlights
+* **Zero Android Bloat**: Boots directly to `/sbin/init` (Busybox / Buildroot). No Android runtime (ART/Dalvik), Zygote, or background cloud telemetry.
+* **100% Self-Contained Repository**: Everything required to compile, configure, and package the firmware lives in a single folder with no external dependencies.
+* **Native Reverse-Engineered Hardware Stack**: Full kernel module drivers for the Gowin FPGA mini matrix display, IS31FL3236A 24-channel RGB LED ring, dual top buttons, rotary encoder, LTR-308ALS ambient light sensor, and 8-channel mic array.
+* **Dual Top Button DTS Support**: Independent inputs for Alice (Voice Command) and Mic Mute buttons with software mute management and visual LED ring feedback.
+* **AVB 2.0 Cryptographic Signing**: All partitions (`boot`, `system`, `vendor`, `vbmeta`) are cryptographically verified with custom RSA-4096 keys.
+* **Automated One-Click Build (`build_atrios.sh`)**: One master script compiles DTS, triggers Buildroot rootfs compilation, builds raw ext4 `system.PARTITION`, and packages signed Amlogic v2 burning `.img`.
 
 ---
 
-### 3. Firmware Builder Suite (`fw_builder.py`)
+### 2. Hardware Support & Pinout Matrix
 
-The automated assembly suite provides unified CLI operations for firmware compilation, live inspection, and automated daemon watching.
+| Subsystem | Hardware Component | Bus / Pin Details | Keycode / Device | Status | Implementation Details |
+|---|---|---|---|:---:|---|
+| **Top Button 1 (Alice)** | Physical Push Button | `GPIOX_1` (pin 65 / GPIO 475) | `KEY_VOICECOMMAND` (`0x246` / 582) | ✅ **ACTIVE** | Active-low GPIO keypad in DTS (`gpio_keypad`). Wakes up assistant stack. |
+| **Top Button 2 (Mic Mute)** | Physical Push Button | `GPIOX_0` (pin 64 / GPIO 474) | `KEY_MICMUTE` (`0xf8` / 248) | ✅ **ACTIVE** | Software-controlled mic mute. Toggles ALSA capture & displays red ring via `atrios-rotaryd`. |
+| **Rotary Encoder** | Dual-Phase Knob (AB Phase) | `GPIOH_6` (A) / `GPIOAO_10` (B) | `KEY_PAGEUP` / `KEY_PAGEDOWN` | ✅ **ACTIVE** | Hardware interrupts handled by `rotary-volume.ko`. Smooth volume arc rendered on top ring. |
+| **Front Mini Display** | Gowin GW1N-4B FPGA SPI | SPI1 @ 4MHz, Pin 74 (`GPIOX_8`), CS: `GPIOH_7` | `/dev/fb4` (`gowin_led_device`) | ✅ **ACTIVE** | 25x16 monochrome matrix display. Renders clock, animations, and weather via `atrios-screend`. |
+| **Top LED Ring** | 2x Lumissil IS31FL3236A | I2C0 (`0x3c`, `0x3f`), 24 RGB ch | `/dev/fb5` (`quasar_led_ring`) | ✅ **ACTIVE** | Dynamic lighting, volume gauge, mute indicator, and effects via `atrios-test-ring`. |
+| **Light Sensor** | Lite-On LTR-308ALS-01 | I2C0 (`0x53`) | `/sys/bus/iio/devices/iio:device0` | ✅ **ACTIVE** | Ambient lux monitoring. Automatically drives front screen backlight brightness levels. |
+| **Audio Amplifiers** | Silergy SY6045S 20V + ES8156 | TDM-B, I2C2 (`0x08`, `0x2a`, `0x2b`), Pin 75 | ALSA / PipeWire (`snd-soc-sy6045s`) | ✅ **ACTIVE** | 20V amplifier rail enabled cleanly on Pin 75 (`GPIOX_10`) without pop noise. |
+| **8-Channel Mic Array** | Everest ES7210 4-ch ADC + TDM | TDM-C, I2C1 | ALSA Capture (`snd-soc-es7210`) | ✅ **ACTIVE** | Multi-channel microphone capture ready for voice recognition and DSP far-field processing. |
+| **Wi-Fi & Bluetooth** | Realtek RTL8822CS SDIO + UART | `sd_emmc_a`, `uart_A`, WL_REG_ON: `GPIOX_7` | `wlan0` (`88x2es.ko`) / `hci0` | ✅ **ACTIVE** | 2.4/5GHz Wi-Fi with `wpa_supplicant` and Bluetooth 5.0 UART stack. |
+| **Zigbee Module** | Silicon Labs EFR32 (`zb_control`)| UART_AO_B, Pin 82 (`GPIOX_16`), RST: `GPIOX_17` | `/dev/ttyAML4` | ✅ **ACTIVE** | Native serial interface for smart home zigbee gateways. |
+| **HDMI Video** | MPI7002 / Generic HDMI | HDMI TX (`osd1` / `fb0`) | `/dev/fb0` (1024x600 @ 60Hz) | ✅ **ACTIVE** | Custombuilt modeline locked in driver. Clean output from U-Boot to userspace. |
+| **Serial Console** | Amlogic UART0 | `ttyS0` (115200 8N1) | `/dev/ttyS0` | ✅ **ACTIVE** | Early printk and interactive root shell directly on serial port. |
+
+---
+
+### 3. Diagnostic & System Utilities (`/usr/bin/`)
+
+AtriOS Linux includes a built-in suite of diagnostic tools and daemons in `/usr/bin/`:
+
+| Utility | Description | Usage |
+|---|---|---|
+| `atrios-test-buttons` | Interactive monitor for Alice button, Mic Mute button, rotary knob, remote, and light sensor. | `atrios-test-buttons` |
+| `atrios-rotaryd` | Background interaction daemon: handles rotary volume arc on LED ring and software Mic Mute toggle (red LED ring indicator). | `atrios-rotaryd &` |
+| `atrios-test-ring` | Test utility for the 24 RGB-channel top ring (rainbow, chase, pulse, solid colors). | `atrios-test-ring rainbow` / `atrios-test-ring fill 255 0 0` |
+| `atrios-test-screen` | Matrix display test utility for Gowin 25x16 screen (ticker text, clock, smileys, invert). | `atrios-test-screen ticker "HELLO"` |
+| `atrios-screend` | Clock and auto-brightness daemon: reads LTR-308ALS lux and dynamically adjusts matrix display brightness. | `atrios-screend &` |
+| `atrios-test-sensor` | Live ambient illuminance (lux) monitor and calibration tool. | `atrios-test-sensor` |
+| `atrios-test-audio` | Audio output tone generator and 8-channel microphone array recording/vu-meter test. | `atrios-test-audio record` |
+| `atrios-test-wifi` | Scan, status, and connection utility for Realtek RTL8822CS SDIO Wi-Fi. | `atrios-test-wifi scan` |
+
+---
+
+### 4. Repository Structure
+
+The entire project is structured to be completely self-contained within a single repository:
 
 ```
-tools/fw_builder/
-├── builder/
-│   ├── avb.py           # AVB 2.0 RSA-4096 signing engine
-│   ├── cli.py           # Unified CLI interface & commands
-│   ├── dts_boot.py      # Device tree & boot.PARTITION packager
-│   ├── mount.py         # Ext4 loop mount manager
-│   ├── pristine.py      # Stock base extraction & caching
-│   ├── repack.py        # Amlogic v2 image packer & patcher
-│   └── watcher.py       # Live directory watcher daemon
-└── fw_builder.py        # Main executable entry point
+AtriOS-Android/
+├── board/yandex/station2/
+│   ├── rootfs_overlay/           # AtriOS rootfs overlay (firmwares, modules, daemons, configs)
+│   │   ├── etc/                  # asound.conf, init scripts, wpa_supplicant.conf
+│   │   ├── lib/firmware/         # Gowin FPGA, Intel BT, Realtek Wi-Fi, audio amp configs
+│   │   ├── lib/modules/4.9.113/  # Quasar ring, screen, rotary, sensor, audio kernel modules
+│   │   └── usr/bin/              # atrios diagnostic utilities and background daemons
+│   └── station2_defconfig        # Buildroot defconfig for Station 2 / Max
+├── common/                       # Linux 4.9.113 kernel source & DTS
+├── external/avb/                 # Official avbtool cryptographic signing engine
+├── tools/
+│   ├── bin/                      # Statically-linked host utilities (make_ext4fs)
+│   └── fw_builder/               # Firmware assembly & AVB signing suite (fw_builder.py)
+│       └── overlay/dts/          # Dual-button Station 2 Device Tree source
+└── build_atrios.sh               # Master one-click build script
 ```
 
-#### CLI Command Reference
+---
+
+### 5. Building the Firmware
+
+#### Requirements
+* Ubuntu 20.04 / 22.04 LTS (native or WSL2)
+* Packages: `build-essential gcc-aarch64-linux-gnu device-tree-compiler python3 libssl-dev bc bison flex`
+
+#### One-Click Build
+To build the complete flashable firmware image from source:
 
 ```bash
-# 1. Clean build from scratch:
-python3 fw_builder.py build --from-scratch --auto
-
-# 2. Incremental build (repack changed components only):
-python3 fw_builder.py build
-
-# 3. Mount ext4 partition for direct inspection & modification:
-python3 fw_builder.py mount vendor
-python3 fw_builder.py mount system --read-only
-
-# 4. Unmount active partitions cleanly:
-python3 fw_builder.py unmount vendor
-python3 fw_builder.py unmount --all
-
-# 5. Check environment and cache status:
-python3 fw_builder.py status
-
-# 6. Purge temporary files and cache:
-python3 fw_builder.py clean
+cd /home/lmods/AtriOS-Android
+./build_atrios.sh
 ```
+
+#### What the Build Pipeline Does:
+1. **Verifies toolchain** and fetches Buildroot 2024.02 LTS if not present.
+2. **Generates kernel module dependencies** (`depmod`) for all Station 2 drivers.
+3. **Compiles Device Tree** (`sm1_s905x3_yandex.dtb`) with dual top buttons and hardware pinouts.
+4. **Builds Buildroot rootfs** (`output/images/rootfs.tar`) with all audio, networking, and system tools.
+5. **Generates raw ext4 `system.PARTITION`** (1.44 GB) via local `tools/bin/make_ext4fs`.
+6. **Signs all partitions with AVB 2.0 (RSA-4096)** and packages `yandex_s905x3_custom_v100.img`.
+
+The finished image is ready for flashing via **Amlogic USB Burning Tool** or **Amlogic Kitchen**.
 
 ---
 
 <a name="-русская-документация"></a>
 ## 🇷🇺 Русская документация
 
-### 1. Архитектура и описание платформы
+### 1. Описание платформы и архитектура
 
-**AtriStation OS** — специализированный дистрибутив операционной системы от **leftymods** для умной колонки **AtriStation Max** на базе процессора **Amlogic S905X3 (SM1 Rev B)**.
+**AtriOS Linux** — независимый легковесный дистрибутив встроенного Linux от **leftymods** для аппаратной платформы умных колонок **Яндекс Станция 2** и **Станция Макс** на базе 4-ядерного процессора **Amlogic S905X3 (SM1)** ARM Cortex-A55.
 
-#### 🛡 Ключевые принципы
-1. **Сохранение стоковых разделов**: Разделы `system`, `vendor`, `odm`, `product` сохраняют полную функциональность и совместимость со всеми сервисами.
-2. **Изолированный уровень адаптации**: Все аппаратные правки локализованы в Device Tree (`sm1_s905x3_yandex.dts`), кастомном ядре Linux 4.9.113 и правилах инициализации.
-3. **Полная криптографическая подпись AVB 2.0**: Все 8 разделов подписываются приватным RSA-4096 ключом (`keys/atristation_priv.pem`) через `avbtool`.
-4. **Автоматизированный пайплайн сборки**: Инструмент `fw_builder.py` выполняет полную сборку от стокового образа до готового `.img` одной командой в WSL2.
+Вместо тяжелого и закрытого Android AOSP, AtriOS загружается напрямую в быстрое окружение **Buildroot 2024.02 LTS** с полноценным стеком ALSA/PipeWire, прямым управлением всем оборудованием и набором встроенных диагностических утилит.
+
+#### 🛡 Ключевые преимущества
+* **Чистый Linux без Android**: Прямая загрузка ядра в `/sbin/init` (Busybox / Buildroot). Никаких ART, Dalvik, Zygote и сервисов слежения.
+* **Автономный репозиторий в одной папке**: Все инструменты, драйверы, оверлеи и скрипты сборки находятся внутри одной директории без внешних зависимостей.
+* **Полный реверс-инжиниринг периферии**: Готовые модули ядра для мини-экрана на FPGA Gowin, 24-канального RGB-кольца IS31FL3236A, энкодера-крутилки, датчика света LTR-308ALS и 8-канального массива микрофонов.
+* **Поддержка двух верхних кнопок в DTS**: Раздельная обработка кнопки Алисы (`KEY_VOICECOMMAND`) и кнопки глушения микрофона (`KEY_MICMUTE`) с индикацией на кольце.
+* **Криптографическая подпись AVB 2.0**: Все критические разделы подписаны ключами RSA-4096 через `avbtool`.
+* **Сборка одной командой (`./build_atrios.sh`)**: Полный цикл компиляции от DTS до готового прошиваемого `.img` Amlogic.
 
 ---
 
 ### 2. Сводная таблица поддержки оборудования
 
-| Подсистема | Компонент / Чип | Шина / Пины | Статус | Детали реализации |
-|---|---|---|:---:|---|
-| **HDMI Экран** | MPI7002 (1024x600 @ 60Hz HDMI) | HDMI TX (`osd1` / `fb0`) | ✅ **РАБОТАЕТ** | Modeline заблокирован в драйвере. Пропатчены `osd_hw.c` и `hdmi_tx_hw.c` (`CLR_AVMUTE`), исключая гашение экрана. |
-| **Звук и Усилители**| ES8156 ЦАП + SY6045S 20V Усилители | TDM-B, I2C2 (`0x08`, `0x2a`, `0x2b`), Pin 75 | ✅ **РАБОТАЕТ** | Маршрут DAPM подключен к Headphones. Питание 20V (`20V_AMPL`) на Pin 75 с плавным включением без щелчков. |
-| **LED Матрица** | Gowin GW1N-4B FPGA SPI (`gowin_led_device`)| SPI1 @ 4MHz, Pin 74 (`GPIOX_8`), CS: `GPIOH_7` | ✅ **РАБОТАЕТ** | Устранен конфликт Pin 74 с TDMA. Отображает часы, анимацию Алисы и статус на `fb4`. |
-| **Верхнее кольцо**| 2x Lumissil IS31FL3236A (`quasar_led_ring`) | I2C0 (`0x3c`, `0x3f`), `fb5` | ✅ **РАБОТАЕТ** | Восстановлен `CONFIG_FB_BACKLIGHT=y` ABI layout. Динамическая подсветка и эффекты активны. |
-| **Zigbee Модуль** | Silicon Labs EFR32 (`zb_control`) | UART_AO_B, Pin 82 (`GPIOX_16`), RST: `GPIOX_17` | ✅ **РАБОТАЕТ** | Освобожден Pin 82 от PWM Wi-Fi. Порт `/dev/ttyAML4` активен. |
-| **Wi-Fi и Bluetooth**| Realtek RTL8822CS / Broadcom SDIO | `sd_emmc_a`, `uart_A`, WL_REG_ON: `GPIOX_7` | ✅ **РАБОТАЕТ** | Драйверы SDIO и UART активны. Тактирование 32.768 кГц через `pwm_e_clk`. |
-| **Энкодер громкости**| Двухфазный энкодер (AB Phase) | `GPIOAO_10` (Phase B), `GPIOH_6` (Phase A) | ✅ **РАБОТАЕТ** | Аппаратные прерывания транслируются напрямую в системную громкость Android. |
-| **Датчик света** | Lite-On LTR-308ALS-01 | I2C0 (`0x53`) | ✅ **РАБОТАЕТ** | Автоматическая регулировка яркости фронтального экрана по уровню освещенности. |
-| **Безопасность AVB**| RSA 4096-bit приватный ключ | Все 8 разделов + `vbmeta.PARTITION` | ✅ **РАБОТАЕТ** | Хэширование и хэш-деревья `SHA256_RSA4096` через официальный `avbtool`. |
-| **Консоль UART** | Root Shell (`/system/bin/sh`) | UART0 (`ttyS0`, 115200 8N1) | ✅ **РАБОТАЕТ** | Интерактивный терминал активен (`androidboot.console=ttyS0 console=ttyS0,115200`). |
+| Подсистема | Компонент / Чип | Шина / Пины | Кнопка / Устройство | Статус | Детали реализации |
+|---|---|---|---|:---:|---|
+| **Верхняя кнопка 1 (Алиса)** | Физическая кнопка | `GPIOX_1` (pin 65 / GPIO 475) | `KEY_VOICECOMMAND` (582) | ✅ **РАБОТАЕТ** | Активный низкий уровень (`gpio_keypad`). Вызов ассистента. |
+| **Верхняя кнопка 2 (Mic Mute)** | Физическая кнопка | `GPIOX_0` (pin 64 / GPIO 474) | `KEY_MICMUTE` (248) | ✅ **РАБОТАЕТ** | Программный мут микрофона. Переключает ALSA и зажигает красное кольцо через `atrios-rotaryd`. |
+| **Энкодер громкости** | Двухфазная крутилка (AB Phase)| `GPIOH_6` (A) / `GPIOAO_10` (B) | `KEY_PAGEUP` / `KEY_PAGEDOWN` | ✅ **РАБОТАЕТ** | Прерывания обрабатываются драйвером `rotary-volume.ko`. Плавная дуга на кольце. |
+| **LED Матрица (экран)** | Gowin GW1N-4B FPGA SPI | SPI1 @ 4MHz, Pin 74 (`GPIOX_8`), CS: `GPIOH_7` | `/dev/fb4` (`gowin_led_device`) | ✅ **РАБОТАЕТ** | Монохромная матрица 25x16. Часы, анимации и погода через `atrios-screend`. |
+| **Верхнее RGB кольцо** | 2x Lumissil IS31FL3236A | I2C0 (`0x3c`, `0x3f`), 24 канала | `/dev/fb5` (`quasar_led_ring`) | ✅ **РАБОТАЕТ** | Динамическая подсветка, индикатор громкости, статуса мута и световые эффекты. |
+| **Датчик света** | Lite-On LTR-308ALS-01 | I2C0 (`0x53`) | `/sys/bus/iio/devices/iio:device0` | ✅ **РАБОТАЕТ** | Замер освещенности в люксах. Автоматическая регулировка яркости экрана. |
+| **Звук и Усилители** | Silergy SY6045S 20V + ES8156 | TDM-B, I2C2 (`0x08`, `0x2a`, `0x2b`), Pin 75 | ALSA / PipeWire (`snd-soc-sy6045s`) | ✅ **РАБОТАЕТ** | Питание 20V на Pin 75 (`GPIOX_10`) с плавным пуском без щелчков. |
+| **Массив микрофонов (8-Ch)**| Everest ES7210 4-ch ADC + TDM | TDM-C, I2C1 | ALSA Capture (`snd-soc-es7210`) | ✅ **РАБОТАЕТ** | Многоканальный захват звука для распознавания речи и фильтрации шума. |
+| **Wi-Fi и Bluetooth** | Realtek RTL8822CS SDIO + UART | `sd_emmc_a`, `uart_A`, WL_REG_ON: `GPIOX_7` | `wlan0` (`88x2es.ko`) / `hci0` | ✅ **РАБОТАЕТ** | Поддержка 2.4/5 ГГц Wi-Fi через `wpa_supplicant` и Bluetooth 5.0 UART. |
+| **Zigbee Модуль** | Silicon Labs EFR32 (`zb_control`)| UART_AO_B, Pin 82 (`GPIOX_16`), RST: `GPIOX_17` | `/dev/ttyAML4` | ✅ **РАБОТАЕТ** | Прямой последовательный порт для интеграции шлюзов умного дома. |
+| **HDMI Видео** | MPI7002 / Generic HDMI | HDMI TX (`osd1` / `fb0`) | `/dev/fb0` (1024x600 @ 60Hz) | ✅ **РАБОТАЕТ** | Modeline заблокирован в драйвере. Стабильный вывод без гашения экрана. |
+| **UART Консоль** | Amlogic UART0 | `ttyS0` (115200 8N1) | `/dev/ttyS0` | ✅ **РАБОТАЕТ** | Интерактивный root-терминал прямо через последовательный порт. |
 
 ---
 
-### 3. Быстрый старт сборки прошивки
+### 3. Утилиты диагностики и демоны (`/usr/bin/`)
+
+В образ системы предустановлен полный комплект тестовых утилит:
+
+| Утилита | Назначение | Пример вызова |
+|---|---|---|
+| `atrios-test-buttons` | Интерактивный монитор обеих кнопок (Алиса и Mic Mute), энкодера, пульта и датчика света. | `atrios-test-buttons` |
+| `atrios-rotaryd` | Системный демон: индикация громкости на LED-кольце при вращении и переключение мута микрофона (красное кольцо). | `atrios-rotaryd &` |
+| `atrios-test-ring` | Тест 24 RGB-каналов кольца (радуга, бегущий огонь, дыхание, заливка). | `atrios-test-ring rainbow` / `atrios-test-ring fill 255 0 0` |
+| `atrios-test-screen` | Тест матричного экрана Gowin 25x16 (бегущая строка, часы, смайлы, инверсия). | `atrios-test-screen ticker "ATRIOS"` |
+| `atrios-screend` | Демон часов и автояркости: плавное диммирование экрана по данным с датчика LTR-308ALS. | `atrios-screend &` |
+| `atrios-test-sensor` | Монитор освещенности датчика LTR-308ALS в реальном времени с выводом люксов. | `atrios-test-sensor` |
+| `atrios-test-audio` | Генератор проверочного тона и запись с 8-канального микрофонного массива. | `atrios-test-audio record` |
+| `atrios-test-wifi` | Сканирование сетей, статус и подключение к Wi-Fi (Realtek RTL8822CS SDIO). | `atrios-test-wifi scan` |
+
+---
+
+### 4. Сборка прошивки
+
+Сборка полностью автономна и выполняется одной командой:
 
 ```bash
-# Клонирование и переход в репозиторий:
 cd /home/lmods/AtriOS-Android
-
-# Полная сборка с нуля:
-python3 tools/fw_builder/fw_builder.py build --from-scratch --auto
-
-# Проверка статуса сборщика и кэша:
-python3 tools/fw_builder/fw_builder.py status
+./build_atrios.sh
 ```
+
+Скрипт автоматически скомпилирует DTS, соберет rootfs Buildroot, сгенерирует raw ext4 `system.PARTITION`, подпишет все разделы ключами RSA-4096 и сформирует готовый файл `yandex_s905x3_custom_v100.img` в каталоге `tools/fw_builder/`.
+
+Прошивка осуществляется через стандартный **Amlogic USB Burning Tool**.
 
 ---
 
 <div align="center">
 
-**Maintainer**: leftymods • **Target**: AtriStation Max (Amlogic S905X3)
+**Maintainer**: leftymods • **Hardware**: Yandex Station 2 / Station Max (Amlogic S905X3)
 
 </div>
