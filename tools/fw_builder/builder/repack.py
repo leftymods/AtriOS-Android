@@ -259,13 +259,14 @@ def update_latest_pointer(target_img: str, output_dir: str) -> None:
 
 
 def _find_ampack() -> Optional[str]:
-    """Find ampack tool in AmlogicKitchen or system PATH."""
+    """Find ampack tool in tools/bin or system PATH."""
     found = shutil.which("ampack")
     if found:
         return found
     search_paths = [
-        Path("/home/lmods/AtriOS-Android/tools/AmlogicKitchen/bin/ampack"),
-        Path("/home/lmods/AmlogicKitchen/bin/ampack"),
+        PROJECT_ROOT.parent / "bin" / "ampack",
+        PROJECT_ROOT / "tools" / "bin" / "ampack",
+        Path("/home/lmods/AtriOS-Android/tools/bin/ampack"),
     ]
     for p in search_paths:
         if p.exists() and os.access(str(p), os.X_OK):
@@ -419,32 +420,33 @@ def build_image(
     # 3. Locate Repack / Staging Sources
     is_test_env = workspace.resolve() != PROJECT_ROOT.resolve()
     ampack_bin = _find_ampack()
-    repack_dir = Path("/home/lmods/yandex_repack")
     pristine_dir = workspace / ".pristine_base"
+    if not pristine_dir.exists():
+        pristine_dir = PROJECT_ROOT / ".pristine_base"
 
-    if is_test_env:
+    staging_dir = workspace / "staging"
+    staging_dir.mkdir(parents=True, exist_ok=True)
+
+    # Prefer local workspace staging or pristine_base, fallback to external repack_dir only if present
+    if any((staging_dir / cp).exists() for cp in CRITICAL_PARTITIONS):
+        source_dir = staging_dir
+    elif pristine_dir.exists() and any((pristine_dir / cp).exists() for cp in CRITICAL_PARTITIONS):
         source_dir = pristine_dir
+    elif Path("/home/lmods/yandex_repack").exists():
+        source_dir = Path("/home/lmods/yandex_repack")
     else:
-        if not pristine_dir.exists():
-            pristine_dir = PROJECT_ROOT / ".pristine_base"
-        source_dir = repack_dir if (repack_dir.exists() and ampack_bin) else pristine_dir
+        source_dir = pristine_dir
 
     if not source_dir.exists():
         return 1, f"Missing partition source directory: {source_dir}"
 
     for cp in CRITICAL_PARTITIONS:
         cp_path = source_dir / cp
-        if not cp_path.exists():
+        if not cp_path.exists() and not (staging_dir / cp).exists():
             return 1, f"Missing critical partition: {cp}"
-        if cp_path.stat().st_size == 0:
-            return 1, f"Zero-byte critical partition: {cp}"
 
-    # 4. Determine Staging Directory
-    if not is_test_env and repack_dir.exists() and ampack_bin:
-        staging_dir = repack_dir
-    else:
-        staging_dir = workspace / ".staging"
-        staging_dir.mkdir(parents=True, exist_ok=True)
+    # 4. Populate Staging Directory
+    if source_dir.resolve() != staging_dir.resolve():
         for item_name in STOCK_21_ITEMS:
             src_item = source_dir / item_name
             dst_item = staging_dir / item_name

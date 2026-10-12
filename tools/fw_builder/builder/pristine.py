@@ -22,13 +22,15 @@ DEFAULT_CACHE_DIR = PROJECT_ROOT / ".pristine_base"
 DEFAULT_VENDOR_CACHE = PROJECT_ROOT / ".pristine_vendor"
 
 AMPACK_CANDIDATES = [
-    "/home/lmods/AtriOS-Android/tools/AmlogicKitchen/bin/ampack",
-    "/home/lmods/AmlogicKitchen/bin/ampack",
+    PROJECT_ROOT.parent / "bin" / "ampack",
+    PROJECT_ROOT / "tools" / "bin" / "ampack",
+    "/home/lmods/AtriOS-Android/tools/bin/ampack",
 ]
 
 IMGEXTRACTOR_CANDIDATES = [
-    "/home/lmods/AtriOS-Android/tools/AmlogicKitchen/bin/imgextractor.py",
-    "/home/lmods/AmlogicKitchen/bin/imgextractor.py",
+    PROJECT_ROOT.parent / "bin" / "imgextractor.py",
+    PROJECT_ROOT / "tools" / "bin" / "imgextractor.py",
+    "/home/lmods/AtriOS-Android/tools/bin/imgextractor.py",
 ]
 
 # The complete 21 items contained within stock yandex_1.99.img

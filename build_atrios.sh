@@ -11,7 +11,6 @@ BOARD_DIR="$PROJECT_ROOT/board/yandex/station2"
 OVERLAY_DIR="$BOARD_DIR/rootfs_overlay"
 TOOLS_DIR="$PROJECT_ROOT/tools/fw_builder"
 MAKE_EXT4FS="$PROJECT_ROOT/tools/bin/make_ext4fs"
-[ ! -x "$MAKE_EXT4FS" ] && MAKE_EXT4FS="$PROJECT_ROOT/tools/AmlogicKitchen/bin/make_ext4fs"
 [ ! -x "$MAKE_EXT4FS" ] && MAKE_EXT4FS="$(which make_ext4fs 2>/dev/null || true)"
 
 echo "=========================================================="
