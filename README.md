@@ -1,16 +1,17 @@
-# AtriOS Linux — Yandex Station 2 / Station Max
+# AtriOS Linux — Yandex Station Max (Replaced SoC to S905X3)
 
 <p align="center">
-  <strong>Autonomous Embedded Linux Distribution for Smart Audio Hardware & Displays</strong>
+  <strong>Autonomous Embedded Linux Distribution for Yandex Station Max with replaced SoC to S905X3</strong>
   <br />
-  <em>Complete local, cloud-free replacement firmware for <strong>Yandex Station 2 / Station Max</strong> (Amlogic S905X3 / SM1)</em>
+  <em>Complete local, cloud-free replacement firmware for <strong>Yandex Station Max</strong> (Hardware mod: S905X3 / SM1 SoC swap)</em>
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/Target-Yandex%20Station%20Max-blue?style=flat-square" alt="Target" />
+  <img src="https://img.shields.io/badge/Hardware%20Mod-SoC%20Replaced%20to%20S905X3-orange?style=flat-square" alt="SoC Mod" />
   <img src="https://img.shields.io/badge/Architecture-ARM64%20(aarch64)-0284c7?style=flat-square" alt="Architecture" />
   <img src="https://img.shields.io/badge/Buildroot-2024.02%20LTS-16a34a?style=flat-square" alt="Buildroot" />
   <img src="https://img.shields.io/badge/Linux%20Kernel-4.9.113%20(SMP%20PREEMPT)-7c3aed?style=flat-square" alt="Kernel" />
-  <img src="https://img.shields.io/badge/SoC-Amlogic%20S905X3%20%2F%20SM1-ea580c?style=flat-square" alt="SoC" />
   <img src="https://img.shields.io/badge/Audio-PipeWire%20%7C%208--Ch%20Mic-purple?style=flat-square" alt="Audio" />
   <img src="https://img.shields.io/badge/Hardware%20Testing-Untested%20on%20Physical%20Device-amber?style=flat-square" alt="Hardware Testing" />
   <img src="https://img.shields.io/badge/License-GPL--2.0-slate?style=flat-square" alt="License" />
@@ -18,29 +19,29 @@
 
 > [!WARNING]
 > **Experimental / Work in Progress / Не проверено на реальном железе**:
-> Прошивка, модификации ядра Linux 4.9.113, дерево устройств (DTS) и драйверы периферии находятся в стадии активной разработки (bring-up) и **пока не были протестированы на физическом реальном устройстве (Yandex Station 2 / Station Max)**. Используйте с осторожностью при первом включении и отладке.
+> Прошивка, модификации ядра Linux 4.9.113, дерево устройств (DTS) и драйверы периферии предназначены для **Яндекс Станции Макс с аппаратно заменённым процессором на Amlogic S905X3 (SM1)**. Проект находится в стадии активного первого запуска (bring-up) и **пока не был протестирован на физическом устройстве**. Используйте с осторожностью при первом включении и отладке.
 >
-> *(Firmware, kernel drivers, and device-tree modifications are experimental and have **not yet been verified on real physical hardware**).*
+> *(Firmware, kernel drivers, and device-tree modifications are experimental and designed specifically for **Yandex Station Max with an S905X3 hardware SoC swap**; not yet verified on real physical hardware).*
 
 ---
 
 ## Обзор проекта / Overview
 
-**AtriOS Linux** — независимый дистрибутив встроенного Linux от **leftymods** для умных колонок **Яндекс Станция 2** и **Станция Макс** на базе 4-ядерного чипа **Amlogic S905X3 (SM1)** ARM Cortex-A55.
+**AtriOS Linux** — независимый автономный дистрибутив встроенного Linux от **leftymods** для умной колонки **Яндекс Станция Макс** с аппаратно заменённым процессором на **Amlogic S905X3 (SM1)** ARM Cortex-A55.
 
 Проект полностью заменяет штатный закрытый Android 9 на чистую систему на базе **Buildroot 2024.02 LTS**:
-- Загрузка напрямую в `/sbin/init` (Busybox) за считанные секунды без Android/AOSP, ART, Zygote и фоновых сервисов Яндекса.
-- Звуковая подсистема ALSA и PipeWire/WirePlumber с прямой поддержкой 8-канального микрофонного массива и 20V усилителей.
-- Прямое управление всей периферией: монохромная матрица Gowin FPGA, 24-канальное RGB-кольцо, энкодер-крутилка, датчик освещенности, обе верхние кнопки.
-- **Полная автономность репозитория**: все инструменты, драйверы, оверлеи и сборщик прошивки живут в одной папке без внешних зависимостей.
+- Загрузка напрямую в `/sbin/init` (Busybox) за считанные секунды без Android/AOSP, ART, Zygote и сервисов Яндекса.
+- Звуковая подсистема ALSA и PipeWire/WirePlumber с прямой поддержкой 8-канального микрофонного массива (ES7210) и 20V усилителей (SY6045S).
+- Прямое управление всей периферией Станции Макс: матричный дисплей 25x16 Gowin FPGA, 24-канальное RGB-кольцо, энкодер громкости, датчик света, обе верхние кнопки (Алиса и отключение микрофона).
+- **100% автономность репозитория**: все инструменты сборки, драйверы, оверлеи и упаковщик прошивки живут в этой папке без внешних зависимостей.
 
 ---
 
-## Hardware & Subsystem Status
+## Hardware & Subsystem Status (Yandex Station Max)
 
 | Subsystem | Hardware Component | Bus / Interface | Driver / Daemon | Status |
 |---|---|---|---|:---:|
-| **Firmware Build System** | Self-contained build pipeline (`build_atrios.sh`) | Host / WSL2 | `make_ext4fs` + `fw_builder.py` | [x] Verified in pipeline |
+| **Firmware Build System** | Self-contained build pipeline (`build_atrios.sh`) | Host / WSL2 | `make_ext4fs` + `ampack` | [x] Verified in pipeline |
 | **AVB 2.0 Security** | RSA 4096-bit key pair (`vbmeta`) | eMMC Boot | `external/avb/avbtool` | [x] Verified on images |
 | **UART Serial Console** | Amlogic UART0 (115200 8N1) | `/dev/ttyS0` | `ttyS0` interactive root shell | [x] Verified in bootloader |
 | **Top Button 1 (Alice)** | Tactile Push Button | `GPIOX_1` (pin 65 / GPIO 475) | `gpio_keypad` (`KEY_VOICECOMMAND`) | [ ] Untested on hardware |
@@ -56,7 +57,7 @@
 | **Zigbee** | Silicon Labs EFR32 | UART_AO_B (`/dev/ttyAML4`), Pin 82/83 | `zb_control` (Z2M / ZHA coordinator) | [ ] Untested on hardware |
 | **HDMI Video** | MPI7002 / Generic HDMI TX | HDMI TX (`osd1` / `fb0`) | `/dev/fb0` (1024x600 @ 60Hz) | [ ] Untested on hardware |
 
-> *Примечание: драйверы, DTS и модули полностью интегрированы в образ, однако требуют валидации непосредственно на физическом образце устройства.*
+> *Примечание: все драйверы, DTS и модули интегрированы в образ сборки, однако требуют валидации непосредственно на физическом образце устройства.*
 
 ---
 
@@ -79,7 +80,7 @@
 
 ## Чек-лист проверки на плате (по UART)
 
-Подключаемся к UART-консоли (`ttyS0`, 115200 8N1) и проверяем компоненты:
+Подключаемся к UART-консоли (`ttyS0`, 115200 8N1) и проверяем компоненты Станции Макс:
 
 ### 1. Проверка загруженных модулей ядра:
 ```bash
@@ -103,7 +104,7 @@ atrios-test-ring fill 255 0 0 # красный цвет
 atrios-test-ring off          # выключить
 ```
 
-### 4. Экранчик 25x16:
+### 4. Экранчик 25x16 (Gowin FPGA):
 ```bash
 atrios-test-screen ticker "ATRIOS"  # бегущая строка
 atrios-test-screen clock            # часы
@@ -116,7 +117,7 @@ atrios-test-sensor
 ```
 Выводит показания в люксах. При закрытии рукой значения должны падать.
 
-### 6. Звук и микрофоны:
+### 6. Звук и 8 микрофонов:
 ```bash
 atrios-test-audio tone                    # проверочный тон в динамики
 atrios-test-audio record 5 /tmp/mic.wav   # запись 5 сек с 8 микрофонов
@@ -144,13 +145,13 @@ AtriOS-Android/
 │   │   ├── lib/firmware/         # Прошивки Gowin FPGA, Intel BT, Realtek Wi-Fi
 │   │   ├── lib/modules/4.9.113/  # Модули ядра кольца, экрана, звука, сенсора
 │   │   └── usr/bin/              # Утилиты и демоны atrios-*
-│   └── station2_defconfig        # Конфиг Buildroot под Станцию 2 / Макс
+│   └── station2_defconfig        # Конфиг Buildroot под Станцию Макс (S905X3)
 ├── common/                       # Ядро 4.9.113 и дерево устройств (DTS)
 ├── external/avb/                 # Утилита avbtool для подписи AVB 2.0
 ├── tools/
 │   ├── bin/                      # Автономные утилиты сборщика (ampack, make_ext4fs, dtbTool)
 │   └── fw_builder/               # Сборщик и упаковщик прошивки (fw_builder.py)
-│       └── overlay/dts/          # DTS под Станцию 2 с обеими кнопками
+│       └── overlay/dts/          # DTS под Станцию Макс (S905X3) с обеими кнопками
 └── build_atrios.sh               # Главный скрипт сборки одной командой
 ```
 
@@ -172,7 +173,7 @@ cd /home/lmods/AtriOS-Android
 
 ### Что выполняет скрипт:
 1. Загружает Buildroot 2024.02 LTS (если каталог отсутствует).
-2. Компилирует дерево устройств (`sm1_s905x3_yandex.dtb`) с поддержкой обеих верхних кнопок.
+2. Компилирует дерево устройств (`sm1_s905x3_yandex.dtb`) с поддержкой обеих верхних кнопок под Станцию Макс.
 3. Собирает rootfs Buildroot со звуковым и сетевым стеком.
 4. Создаёт raw ext4 `system.PARTITION` через локальный `tools/bin/make_ext4fs`.
 5. Подписывает разделы ключами RSA-4096 через `avbtool`.
