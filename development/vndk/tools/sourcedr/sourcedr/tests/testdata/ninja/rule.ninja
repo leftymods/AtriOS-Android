@@ -1,5 +1,0 @@
-rule cc
-  command = gcc -c -o $outs $ins
-
-rule ld
-  command = gcc -o $outs $ins

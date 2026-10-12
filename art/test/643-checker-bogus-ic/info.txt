@@ -1,1 +1,0 @@
-Verify the compiler can handle a bogus inline cache in a profile.

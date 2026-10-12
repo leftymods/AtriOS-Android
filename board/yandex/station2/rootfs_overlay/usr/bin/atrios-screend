@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+import sys
+import os
+import time
+
+FB_SCREEN = "/dev/fb4"
+WIDTH = 25
+HEIGHT = 16
+BPP = 3
+FRAME_SIZE = WIDTH * HEIGHT * BPP
+
+FONT = {
+    '0': [0b01110, 0b10001, 0b10011, 0b10101, 0b11001, 0b10001, 0b01110],
+    '1': [0b00100, 0b01100, 0b00100, 0b00100, 0b00100, 0b00100, 0b01110],
+    '2': [0b01110, 0b10001, 0b00001, 0b00110, 0b01000, 0b10000, 0b11111],
+    '3': [0b11110, 0b00001, 0b00001, 0b01110, 0b00001, 0b00001, 0b11110],
+    '4': [0b00010, 0b00110, 0b01010, 0b10010, 0b11111, 0b00010, 0b00010],
+    '5': [0b11111, 0b10000, 0b11110, 0b00001, 0b00001, 0b10001, 0b01110],
+    '6': [0b01110, 0b10000, 0b11110, 0b10001, 0b10001, 0b10001, 0b01110],
+    '7': [0b11111, 0b00001, 0b00010, 0b00100, 0b01000, 0b01000, 0b01000],
+    '8': [0b01110, 0b10001, 0b10001, 0b01110, 0b10001, 0b10001, 0b01110],
+    '9': [0b01110, 0b10001, 0b10001, 0b01111, 0b00001, 0b00001, 0b01110],
+    ':': [0b00000, 0b00100, 0b00100, 0b00000, 0b00100, 0b00100, 0b00000],
+}
+
+def set_pixel(buf, x, y, r, g, b):
+    if 0 <= x < WIDTH and 0 <= y < HEIGHT:
+        idx = (y * WIDTH + x) * BPP
+        buf[idx + 0] = int(r)
+        buf[idx + 1] = int(g)
+        buf[idx + 2] = int(b)
+
+def send_frame(buf):
+    try:
+        with open(FB_SCREEN, "wb") as f:
+            f.write(buf)
+            f.flush()
+    except Exception:
+        pass
+
+def main():
+    while True:
+        now = time.strftime("%H:%M")
+        buf = bytearray(FRAME_SIZE)
+        x_positions = [1, 7, 12, 14, 20]
+        for char, x_start in zip(now, x_positions):
+            glyph = FONT.get(char, [0]*7)
+            for row_idx, row_bits in enumerate(glyph):
+                y = 4 + row_idx
+                for col_idx in range(5):
+                    if (row_bits >> (4 - col_idx)) & 1:
+                        set_pixel(buf, x_start + col_idx, y, 220, 220, 240)
+        send_frame(buf)
+        time.sleep(15)
+
+if __name__ == "__main__":
+    main()

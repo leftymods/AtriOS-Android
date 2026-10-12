@@ -1,8 +1,0 @@
-=== pkg/Simple.java ===
-package pkg;
-
-public abstract class Simple {
-  public @interface Foo {
-    String CONST = "ASD";
-  }
-}

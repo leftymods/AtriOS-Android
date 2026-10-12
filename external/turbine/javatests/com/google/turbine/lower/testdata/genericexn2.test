@@ -1,6 +1,0 @@
-=== test/Test.java ===
-package test;
-
-public abstract class Test<E extends Exception> {
-  public abstract String get() throws E;
-}

@@ -1,2 +1,0 @@
-Test that the allocator can go from a full heap to an empty one and is able to allocate a large
-object array.

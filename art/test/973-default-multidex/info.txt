@@ -1,5 +1,0 @@
-Smali-based tests for interface default methods.
-
-Obviously needs to run under ART or a Java 8 Language runtime and compiler.
-
-Tests that we handle referenced throws across dex files.

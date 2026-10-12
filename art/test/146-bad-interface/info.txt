@@ -1,1 +1,0 @@
-Check whether a duplicate class can invoke-interface on an unresolved method.

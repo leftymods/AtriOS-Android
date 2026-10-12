@@ -1,5 +1,0 @@
-In static method
-In instance method
-In synchronized block
-In second instance method
-In second static method

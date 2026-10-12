@@ -1,3 +1,0 @@
-B was loaded with boot classloader
-A was loaded with system classloader
-Done

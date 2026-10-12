@@ -1,3 +1,0 @@
-Regression test for the SimplifyCFG phase of optimizing.
-The invariant that the pre header of a loop header is the
-first predecessor was not preserved.

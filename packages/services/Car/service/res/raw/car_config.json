@@ -1,7 +1,0 @@
-{
-  "SpeedBump": {
-    "acquiredPermitsPerSecond": 0.5,
-    "maxPermitPool": 5,
-    "permitFillDelay": 600
-  }
-}

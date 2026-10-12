@@ -1,1 +1,0 @@
-Tests bitfield rotate simplification in optimizing compiler.

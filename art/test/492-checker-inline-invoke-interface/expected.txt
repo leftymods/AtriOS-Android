@@ -1,5 +1,0 @@
-Hello from clinit
-java.lang.Exception
-	at ForceStatic.<clinit>(Main.java:24)
-	at Main.$inline$foo(Main.java:31)
-	at Main.main(Main.java:50)

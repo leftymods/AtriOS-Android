@@ -1,7 +1,0 @@
-cc_library_host_static {
-    name: "libclangStaticAnalyzerFrontend",
-    defaults: ["clang-defaults"],
-    srcs: ["*.cpp"],
-
-    static_libs: ["libclangStaticAnalyzerCheckers"],
-}

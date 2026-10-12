@@ -1,5 +1,0 @@
-cc_library_static {
-    name: "libclangRewrite",
-    defaults: ["clang-defaults"],
-    srcs: ["*.cpp"],
-}

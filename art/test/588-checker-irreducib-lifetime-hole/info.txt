@@ -1,3 +1,0 @@
-Regression test for optimizing that used to have a too
-strong DCHECK in the presence of a combination of irreducible loops
-and try/catch.

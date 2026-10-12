@@ -1,3 +1,0 @@
-class Simple {
-  void m(@B int x) {}
-}

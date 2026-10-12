@@ -1,2 +1,0 @@
-Test whether we can run code from an application split into multiple dex files (similar to
-MultiDex).

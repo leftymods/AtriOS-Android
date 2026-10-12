@@ -37,3 +37,14 @@ tools/fw_builder/yandex_1.99.img
 yandex_1.99.img
 __pycache__/
 *.pyc
+
+# AtriOS Buildroot & Firmware Builder Artifacts
+buildroot/
+*.img
+*.PARTITION
+*.USB
+*.ENC
+tools/fw_builder/staging/
+tools/fw_builder/overlay/system/
+tools/fw_builder/*.img
+tools/fw_builder/overlay/dts/*.dtb

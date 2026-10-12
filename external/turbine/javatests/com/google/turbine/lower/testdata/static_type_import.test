@@ -1,5 +1,0 @@
-=== Test.java ===
-import static java.util.Map.Entry;
-public interface Test {
-  Entry f();
-}

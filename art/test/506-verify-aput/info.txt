@@ -1,2 +1,0 @@
-Test that an aput on a null array is properly checked
-by the verifier.

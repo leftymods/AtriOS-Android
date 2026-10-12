@@ -1,2 +1,0 @@
-Test trying to reproduce class loader issues with the verifier.
-See comments in src-ex/ChildClass.java

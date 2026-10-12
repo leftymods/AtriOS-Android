@@ -1,3 +1,0 @@
-Regression test for the load store elimination optimization,
-which used to wrongly remove field stores in the presence of
-unresolved accesses.

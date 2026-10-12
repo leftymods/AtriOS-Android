@@ -1,5 +1,0 @@
-libc_and_cpp {
-  global:
-    CFunction;
-    _Z3fooPiS_;
-};

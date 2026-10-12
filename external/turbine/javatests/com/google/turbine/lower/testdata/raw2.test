@@ -1,7 +1,0 @@
-=== test/Raw.java ===
-package test;
-
-public class Raw<T> {
-  public class Inner {}
-  Raw.Inner INSTANCE;
-}

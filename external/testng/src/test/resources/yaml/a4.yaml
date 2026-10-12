@@ -1,4 +1,0 @@
-name: SingleSuite
-verbose: 2
-
-suiteFiles: [ a4-a.yaml, a4-b.yaml ]

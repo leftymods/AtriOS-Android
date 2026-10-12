@@ -1,5 +1,0 @@
-=== Test.java ===
-import java.util.Map.*;
-class Test {
-  Entry<String, String> e;
-}

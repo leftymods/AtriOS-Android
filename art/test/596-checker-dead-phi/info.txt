@@ -1,2 +1,0 @@
-Regression test for optimizing where we used to replace a dead loop
-phi with its first incoming input.

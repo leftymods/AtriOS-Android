@@ -1,2 +1,0 @@
-Regression test for optimizing that used to miscompile
-shifts on ARM.

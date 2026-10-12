@@ -1,2 +1,0 @@
-We used to put wrong entries in the dex cache, which would
-confuse the interface trampoline.

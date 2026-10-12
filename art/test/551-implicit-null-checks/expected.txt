@@ -1,4 +1,0 @@
-NPE from GetLong
-NPE from PutLong
-NPE from GetDouble
-NPE from PutDouble

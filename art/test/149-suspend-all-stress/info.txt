@@ -1,1 +1,0 @@
-Stress test for multiple threads calling SuspendAll

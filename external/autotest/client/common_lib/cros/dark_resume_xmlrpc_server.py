@@ -1,1 +1,0 @@
-../../cros/dark_resume_xmlrpc_server.py

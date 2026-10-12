@@ -1,8 +1,0 @@
-cc_library_static {
-    name: "libLLVMAArch64Disassembler",
-    defaults: [
-        "llvm-lib-defaults",
-        "llvm-aarch64-defaults",
-    ],
-    srcs: ["*.cpp"],
-}

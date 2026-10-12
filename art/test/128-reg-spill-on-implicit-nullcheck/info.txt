@@ -1,1 +1,0 @@
-This is a compiler reggression test for missing reg spilling on implicit nullcheck.

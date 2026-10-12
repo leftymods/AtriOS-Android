@@ -1,2 +1,0 @@
-Ensure FindLocksAtDexPc is able to pass through quickened instructions related
-to unresolved classes.

@@ -1,0 +1,45 @@
+#!/bin/sh
+# /etc/init.d/S01modules - Load Amlogic & Station 2 hardware modules in dependency order
+
+case "$1" in
+  start)
+    echo "[AtriOS] Loading hardware drivers..."
+    depmod -a 2>/dev/null || true
+
+    # 1. Audio drivers & codecs
+    modprobe snd-aloop 2>/dev/null || insmod /lib/modules/4.9.113/snd-aloop.ko 2>/dev/null
+    modprobe snd-soc-pcm1774 2>/dev/null || insmod /lib/modules/4.9.113/snd-soc-pcm1774.ko 2>/dev/null
+    modprobe snd-soc-pcm1774-i2c 2>/dev/null || insmod /lib/modules/4.9.113/snd-soc-pcm1774-i2c.ko 2>/dev/null
+    modprobe snd-soc-es7210 2>/dev/null || insmod /lib/modules/4.9.113/snd-soc-es7210.ko 2>/dev/null
+    modprobe snd-soc-es8156 2>/dev/null || insmod /lib/modules/4.9.113/snd-soc-es8156.ko 2>/dev/null
+    modprobe snd-soc-sy6045s 2>/dev/null || insmod /lib/modules/4.9.113/snd-soc-sy6045s.ko 2>/dev/null
+    modprobe snd-soc-tas5825m 2>/dev/null || insmod /lib/modules/4.9.113/snd-soc-tas5825m.ko 2>/dev/null
+
+    # 2. Rotary knob & sensors
+    modprobe rotary-volume 2>/dev/null || insmod /lib/modules/4.9.113/rotary-volume.ko 2>/dev/null
+    modprobe ltr308als01 2>/dev/null || insmod /lib/modules/4.9.113/ltr308als01.ko 2>/dev/null
+
+    # 3. Displays: Gowin 25x16 screen & IS31FL32xx LED ring
+    modprobe gowin_led_device 2>/dev/null || insmod /lib/modules/4.9.113/gowin_led_device.ko 2>/dev/null
+    modprobe quasar_led_screen 2>/dev/null || insmod /lib/modules/4.9.113/quasar_led_screen.ko 2>/dev/null
+    modprobe leds-is31fl32xx 2>/dev/null || insmod /lib/modules/4.9.113/leds-is31fl32xx.ko 2>/dev/null
+    modprobe quasar_led_ring 2>/dev/null || insmod /lib/modules/4.9.113/quasar_led_ring.ko 2>/dev/null
+
+    # 4. Wireless (Realtek RTL8822CS/ES)
+    modprobe 88x2es 2>/dev/null || insmod /lib/modules/4.9.113/88x2es.ko 2>/dev/null
+    modprobe zigbee_control 2>/dev/null || insmod /lib/modules/4.9.113/zigbee_control.ko 2>/dev/null
+
+    # 5. VPU & Video decoders
+    for m in vpu encoder amvdec_h265 amvdec_h264 amvdec_vp9; do
+      modprobe $m 2>/dev/null || insmod /lib/modules/4.9.113/${m}.ko 2>/dev/null
+    done
+
+    echo "[AtriOS] Drivers loaded."
+    ;;
+  stop)
+    ;;
+  *)
+    echo "Usage: $0 {start|stop}"
+    exit 1
+esac
+exit 0

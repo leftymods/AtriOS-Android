@@ -1,1 +1,0 @@
-Initial tests for testing the optimizing compiler's register allocator.

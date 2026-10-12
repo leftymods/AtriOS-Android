@@ -1,6 +1,0 @@
-=== test/Test.java ===
-package test;
-
-public class Test<E> {
-  E[][] x;
-}

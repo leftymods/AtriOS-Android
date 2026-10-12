@@ -1,0 +1,40 @@
+#!/bin/sh
+# AtriOS Sound Card and Microphone Array Diagnostic
+
+echo "=============================================="
+echo "    AtriOS Sound Card & Mic Diagnostic        "
+echo "=============================================="
+
+# 1. Check soundcards
+echo "[ALSA Cards]:"
+cat /proc/asound/cards
+
+# 2. Check amplifiers
+echo "[Amplifiers]:"
+if [ -d /sys/bus/i2c/drivers/sy6045s ]; then
+  echo "  SY6045S driver registered. Devices:"
+  ls -d /sys/bus/i2c/drivers/sy6045s/2-00* 2>/dev/null || echo "  No SY6045S bound devices."
+fi
+
+# 3. Playback test tone
+echo "[Playback Test]: Generating 440Hz test chime..."
+if command -v aplay >/dev/null 2>&1; then
+  # Play 1 second 440Hz sine wave
+  speaker-test -D default -c 2 -r 48000 -t sine -f 440 -l 1 2>/dev/null || \
+  aplay -D hw:0,0 /usr/share/sounds/alsa/Front_Center.wav 2>/dev/null || true
+fi
+
+# 4. Microphone array capture test
+echo "[Microphone Test]: Recording 3 seconds from 8-channel mic array..."
+REC_FILE="/tmp/mic_test_8ch.wav"
+if command -v arecord >/dev/null 2>&1; then
+  arecord -D hw:0,1 -c 8 -r 48000 -f S32_LE -d 3 "$REC_FILE" 2>/dev/null || \
+  tinycap "$REC_FILE" -D 0 -d 1 -r 48000 -b 32 -c 8 2>/dev/null || true
+  if [ -f "$REC_FILE" ]; then
+    SIZE=$(ls -l "$REC_FILE" | awk '{print $5}')
+    echo "[OK] Mic capture successful: $REC_FILE ($SIZE bytes)."
+  else
+    echo "[WARN] Could not capture from hw:0,1 mic device."
+  fi
+fi
+echo "=============================================="

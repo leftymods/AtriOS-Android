@@ -1,2 +1,0 @@
-Stress test for deoptimization and JIT, to ensure the
-stack visitor uses the right ArtMethod when deopting.

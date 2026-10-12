@@ -1,1 +1,0 @@
-Regression test for debug build check failure for infinite loop with NOP.

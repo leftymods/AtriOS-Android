@@ -1,2 +1,0 @@
-This is a performance test of invoking static methods in super class. To see the numbers, invoke
-this test with the "--timing" option.

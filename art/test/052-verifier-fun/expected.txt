@@ -1,3 +1,0 @@
-BlahOne
-Zorch.
-10 == 10

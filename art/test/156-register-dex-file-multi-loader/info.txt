@@ -1,2 +1,0 @@
-Regression test to check that we do not allow registering the same dex file
-with multiple class loaders.

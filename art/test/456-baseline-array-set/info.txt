@@ -1,3 +1,0 @@
-Test for optimizing on x86, where we could run out
-of available registers when using the baseline register
-allocator.

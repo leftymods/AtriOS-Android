@@ -1,2 +1,0 @@
-Regression test for optimizing that used to generate invalid
-code for arm.

@@ -1,9 +1,0 @@
-<SystemClass Name="class">
-    <Subsystem Name="subsystem" Type="Skeleton">
-        <ComponentLibrary>
-        </ComponentLibrary>
-        <InstanceDefinition>
-            <BooleanParameter Name="parameter"/>
-        </InstanceDefinition>
-    </Subsystem>
-</SystemClass>

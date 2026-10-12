@@ -1,4 +1,0 @@
--assumenosideeffects class com.android.dialer.common.LogUtil {
-    public static void v(...);
-    public static void d(...);
-}

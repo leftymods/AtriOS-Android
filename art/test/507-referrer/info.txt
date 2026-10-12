@@ -1,2 +1,0 @@
-Regression test for the optimizing compiler, which used
-to do incorrect access checks on static fields when inlining.

@@ -1,1 +1,0 @@
-Check sub-classing of PathClassLoader.

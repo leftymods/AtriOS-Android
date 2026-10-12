@@ -1,3 +1,0 @@
-Regression test for the load store elimination of optimizing
-that used to merge two array gets that have the same inputs but
-not the same type. Note that this only happens if the array is null.

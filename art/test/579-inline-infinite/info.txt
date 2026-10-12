@@ -1,2 +1,0 @@
-Regression test for optimizing.
-Inlining of method with infinite loop cause a crash.

@@ -1,3 +1,0 @@
-Regression test for the bounds check elimination pass, which
-uses to generate a HDeoptimization instruction with an
-HEnvironment that does not have the uses lists updated.

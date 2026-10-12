@@ -1,6 +1,0 @@
-=== OuterParam.java ===
-class OuterParam<T extends String> {
-  class Inner {
-    T f() { return null; }
-  }
-}

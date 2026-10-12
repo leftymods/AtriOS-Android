@@ -1,2 +1,0 @@
-class Test<T, U, Y extends Optional<List<String>> & Comparable<T>> {
-}

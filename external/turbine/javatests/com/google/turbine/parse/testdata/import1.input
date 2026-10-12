@@ -1,3 +1,0 @@
-import a.b;
-import a.b.*;
-import static a.b.c;

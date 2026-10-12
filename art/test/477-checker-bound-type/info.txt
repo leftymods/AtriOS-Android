@@ -1,3 +1,0 @@
-Tests that we only generate a bound type if we have relevant users.
-It also tests a code generator regression for GenerateTestAndBranch which
-didn't take into account NullConstants.

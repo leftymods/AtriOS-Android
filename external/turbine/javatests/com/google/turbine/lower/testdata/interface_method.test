@@ -1,7 +1,0 @@
-=== Test.java ===
-interface Test {
-  static void f() {}
-  void g();
-  default void h() {}
-}
-

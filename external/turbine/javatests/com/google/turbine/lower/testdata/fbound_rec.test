@@ -1,3 +1,0 @@
-=== Test.java ===
-import java.util.List;
-class Test<J extends List<K>, K extends List<J>> {}

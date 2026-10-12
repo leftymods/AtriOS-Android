@@ -1,2 +1,0 @@
-exception caught
-FUZZ result = 1001 16

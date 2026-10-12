@@ -1,3 +1,0 @@
-Regression test for optimizing, that used to consider
-a S/D register a temp, while it conflicted with the
-hard-float calling convention.

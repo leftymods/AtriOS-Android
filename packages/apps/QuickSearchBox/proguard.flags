@@ -1,3 +1,0 @@
--keep class com.android.quicksearchbox.preferences.DeviceSearchFragment
-
--keep class com.android.quicksearchbox.preferences.SearchableItemsFragment

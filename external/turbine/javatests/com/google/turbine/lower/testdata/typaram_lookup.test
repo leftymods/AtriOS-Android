@@ -1,6 +1,0 @@
-=== Test.java ===
-class Test<T> {
-  interface T {}
-  // 'T' is `LTest$T;`, not `TT;`
-  protected Test(T t) {}
-}

@@ -3957,11 +3957,11 @@
 		compatible = "amlogic, gpio_keypad";
 		status = "okay";
 		scan_period = <0x14>;
-		key_num = <0x01>;
-		key_name = "power";
-		key_code = <0x74>;
-		key-gpios = <0x68 0x03 0x00>;
-		detect_mode = <0x00>;
+		key_num = <0x02>;
+		key_name = "function", "micmute";
+		key_code = <0x246 0xf8>;
+		key-gpios = <0x18 0x41 0x01 0x18 0x40 0x01>;
+		detect_mode = <0x01>;
 	};
 
 	unifykey {

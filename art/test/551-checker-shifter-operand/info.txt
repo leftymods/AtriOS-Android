@@ -1,1 +1,0 @@
-Test the merging of instructions into the shifter operand on arm64.

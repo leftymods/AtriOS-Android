@@ -1,5 +1,0 @@
-#!/bin/bash
-
-# Temporary directory to be used on ChromeOS devices.
-
-echo "/tmp"

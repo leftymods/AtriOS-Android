@@ -1,2 +1,0 @@
-Test that attempts to hide objects from a concurrently running GC. The
-concurrent GC should locate the "hidden" objects through a write-barrier.

@@ -1,2 +1,0 @@
-Regression test for the compiler that used to wrongly optimize
-an instanceof.

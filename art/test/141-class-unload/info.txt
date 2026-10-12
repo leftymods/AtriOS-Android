@@ -1,1 +1,0 @@
-Test that classes get freed after they are no longer reachable.

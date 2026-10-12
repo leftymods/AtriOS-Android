@@ -1,1 +1,0 @@
-Ensure java.lang.StringFactory intrinsics are recognized and used.

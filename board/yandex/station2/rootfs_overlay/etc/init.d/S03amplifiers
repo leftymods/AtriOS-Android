@@ -1,0 +1,42 @@
+#!/bin/sh
+# /etc/init.d/S03amplifiers - Initialize Silergy SY6045S / TI TAS5825M audio hardware amplifiers
+
+case "$1" in
+  start)
+    echo "[AtriOS] Initializing audio amplifiers..."
+    sleep 1
+
+    # Silergy SY6045S setup on I2C bus 2
+    if [ -d "/sys/bus/i2c/drivers/sy6045s/2-002b" ]; then
+      echo "[AtriOS] SY6045S Woofer (2-002b) detected. Applying settings..."
+      if [ -f /lib/firmware/sy6045s-woofer-settings.txt ]; then
+        cat /lib/firmware/sy6045s-woofer-settings.txt > /sys/bus/i2c/drivers/sy6045s/2-002b/settings_file 2>/dev/null || true
+      fi
+    fi
+
+    if [ -d "/sys/bus/i2c/drivers/sy6045s/2-002a" ]; then
+      echo "[AtriOS] SY6045S Tweeters (2-002a) detected. Applying settings..."
+      if [ -f /lib/firmware/sy6045s-tweeters-settings.txt ]; then
+        cat /lib/firmware/sy6045s-tweeters-settings.txt > /sys/bus/i2c/drivers/sy6045s/2-002a/settings_file 2>/dev/null || true
+      fi
+    fi
+
+    # TI TAS5825M fallback
+    if [ -d "/sys/bus/i2c/drivers/tas5825m/2-004d" ]; then
+      echo "[AtriOS] TAS5825M detected on I2C bus 2."
+    fi
+
+    # Unmute ALSA playback mixer channels
+    if command -v amixer >/dev/null 2>&1; then
+      amixer -c 0 sset 'Master' 80% unmute 2>/dev/null || true
+      amixer -c 0 sset 'DAC' 100% unmute 2>/dev/null || true
+      amixer -c 0 sset 'TDM-B' unmute 2>/dev/null || true
+    fi
+    ;;
+  stop)
+    ;;
+  *)
+    echo "Usage: $0 {start|stop}"
+    exit 1
+esac
+exit 0

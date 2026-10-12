@@ -1,2 +1,0 @@
-JNI_OnLoad called
-Finalize count too large: false

@@ -1,3 +1,0 @@
-Tests notify frame pop JVMTI functionality.
-
-This tests toggling frame pop off and on.

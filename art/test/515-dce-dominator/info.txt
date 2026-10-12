@@ -1,3 +1,0 @@
-Regression test for the DCE phase of optimizing, where
-we need to recompute the full dominance information of
-the graph when blocks get removed.

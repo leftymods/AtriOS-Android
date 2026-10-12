@@ -1,7 +1,0 @@
-cc_library_static {
-    name: "libclangFrontend",
-    defaults: ["clang-defaults"],
-    srcs: ["*.cpp"],
-}
-
-subdirs = ["Rewrite"]

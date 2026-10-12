@@ -1,3 +1,0 @@
-JNI_OnLoad called
-Java_Test_nativeMethodWithAnnotation
-passed

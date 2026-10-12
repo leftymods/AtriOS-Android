@@ -1,3 +1,0 @@
-struct ShouldRepro {
-  int a;
-};

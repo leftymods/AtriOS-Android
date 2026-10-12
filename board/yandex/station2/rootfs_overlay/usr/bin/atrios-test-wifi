@@ -1,0 +1,62 @@
+#!/bin/sh
+# AtriOS Wi-Fi Diagnostic and Scanning Utility
+
+echo "=============================================="
+echo "    AtriOS Realtek 8822CS/ES Wi-Fi Diagnostic  "
+echo "=============================================="
+
+# 1. Check driver module
+if lsmod | grep -q "88x2es"; then
+  echo "[OK] Driver module 88x2es is LOADED."
+else
+  echo "[!] Driver module 88x2es not loaded. Attempting modprobe..."
+  modprobe 88x2es 2>/dev/null || insmod /lib/modules/4.9.113/88x2es.ko 2>/dev/null
+  sleep 1
+fi
+
+# 2. Check interface wlan0
+if ip link show wlan0 >/dev/null 2>&1; then
+  echo "[OK] Network interface wlan0 exists."
+  ip link set wlan0 up
+else
+  echo "[ERROR] Interface wlan0 NOT found! Check dmesg for SDIO errors."
+  dmesg | grep -i -E "sdio|8822|wlan" | tail -n 10
+  exit 1
+fi
+
+# 3. Scan for wireless networks
+echo "[...] Scanning for available Wi-Fi access points..."
+if command -v iw >/dev/null 2>&1; then
+  iw dev wlan0 scan 2>/dev/null | grep -E "SSID:|signal:" | head -n 30
+elif command -v iwlist >/dev/null 2>&1; then
+  iwlist wlan0 scan 2>/dev/null | grep -E "ESSID|Signal level" | head -n 30
+else
+  echo "Scanning via wpa_cli..."
+  wpa_cli scan >/dev/null 2>&1
+  sleep 2
+  wpa_cli scan_results 2>/dev/null
+fi
+
+echo "----------------------------------------------"
+echo "IP address and connection status:"
+ip addr show wlan0 | grep "inet " || echo "wlan0 has no IP address assigned."
+
+if [ -n "$1" ] && [ -n "$2" ]; then
+  SSID="$1"
+  PASS="$2"
+  echo "Connecting to SSID: $SSID..."
+  cat << EOF > /etc/wpa_supplicant.conf
+ctrl_interface=/var/run/wpa_supplicant
+update_config=1
+
+network={
+    ssid="$SSID"
+    psk="$PASS"
+}
+EOF
+  killall wpa_supplicant 2>/dev/null || true
+  wpa_supplicant -B -i wlan0 -c /etc/wpa_supplicant.conf
+  echo "Requesting DHCP lease..."
+  udhcpc -i wlan0 -n -t 5
+  ping -c 2 8.8.8.8 || true
+fi

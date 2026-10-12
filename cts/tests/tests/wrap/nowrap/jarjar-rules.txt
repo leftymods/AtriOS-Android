@@ -1,1 +1,0 @@
-rule android.wrap.cts.WrapTest** android.wrap.cts.WrapTestNoWrap@1

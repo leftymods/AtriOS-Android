@@ -1,1 +1,0 @@
-Checker test for testing the type merge during reference type propagation.

@@ -1,2 +1,0 @@
-Test for the String.<init> change and deoptimization: make
-sure the compiler knows how to handle dex aliases.

@@ -1,8 +1,0 @@
-=== pkg/Anno.java ===
-package pkg;
-
-public @interface Anno {
-  enum Kind {
-    A, B;
-  }
-}

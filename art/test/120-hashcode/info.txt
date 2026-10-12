@@ -1,1 +1,0 @@
-Check that object hashCode and System.identityHashCode never cause the hash to change.

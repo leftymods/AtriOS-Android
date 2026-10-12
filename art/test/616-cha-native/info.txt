@@ -1,2 +1,0 @@
-Test for Class Hierarchy Analysis (CHA) single-implementation status updating
-behavior on an overridden native method.

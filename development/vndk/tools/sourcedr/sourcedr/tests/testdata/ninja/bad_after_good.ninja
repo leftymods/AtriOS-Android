@@ -1,4 +1,0 @@
-rule cc
-  command = gcc -c -o $in $out
-
-$bad

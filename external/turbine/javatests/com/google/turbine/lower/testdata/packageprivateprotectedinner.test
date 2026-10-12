@@ -1,7 +1,0 @@
-=== test/PackagePrivate.java ===
-package test;
-
-class PackagePrivate {
-  protected class ProtectedInner {}
-}
-

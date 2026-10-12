@@ -1,1 +1,0 @@
-Test unresolved/access checks entry points with the JIT.

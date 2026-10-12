@@ -1,2 +1,0 @@
-Test a regression where DeadPhiHandling would infinitely loop over
-complicated phi dependencies.

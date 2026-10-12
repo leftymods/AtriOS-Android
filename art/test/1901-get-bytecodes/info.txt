@@ -1,3 +1,0 @@
-Tests basic functions in the jvmti plugin.
-
-Tests that the GetBytecodes function works as expected.

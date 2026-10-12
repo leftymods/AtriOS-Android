@@ -1,8 +1,0 @@
-=== Test.java ===
-class Test<T> {
-  class Inner<V> {
-    class InnerMost {}
-  }
-  void f(Inner i) {}
-  void f(Inner.InnerMost i) {}
-}

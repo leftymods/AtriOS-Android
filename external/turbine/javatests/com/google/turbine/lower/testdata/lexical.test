@@ -1,9 +1,0 @@
-=== Lex.java ===
-
-public class Lex {
-  public static class Inh {
-  }
-
-  public static class I extends Inh {
-  }
-}

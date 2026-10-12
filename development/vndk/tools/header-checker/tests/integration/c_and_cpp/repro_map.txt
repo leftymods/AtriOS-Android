@@ -1,4 +1,0 @@
-libreproducability {
-  global:
-    repro;
-};

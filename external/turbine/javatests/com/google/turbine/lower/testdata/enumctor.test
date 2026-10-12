@@ -1,8 +1,0 @@
-=== test/Test.java ===
-package test;
-
-public enum Test {
-  ONE(true);
-
-  private Test(boolean value) {}
-}

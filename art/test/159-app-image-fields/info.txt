@@ -1,3 +1,0 @@
-Regression test for erroneously storing an ArtField* in the app image DexCache
-when the class from the corresponding FieldId is not in the app image, only the
-declaring class is.

@@ -1,5 +1,0 @@
-foo1
-In do nothing.
-In if.
-foo2
-In do nothing.

@@ -1,5 +1,0 @@
-java_library_host {
-    name: "idegen",
-    srcs: ["**/*.java"],
-    static_libs: ["guava"],
-}

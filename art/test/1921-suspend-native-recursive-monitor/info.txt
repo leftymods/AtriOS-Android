@@ -1,2 +1,0 @@
-Tests JVMTI suspending of a thread that is interacting with a raw monitor
-recursively.

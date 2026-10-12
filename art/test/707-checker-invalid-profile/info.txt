@@ -1,2 +1,0 @@
-Verify the compiler can handle an invalid profile with methods
-and classes exceeding the dex file limits.

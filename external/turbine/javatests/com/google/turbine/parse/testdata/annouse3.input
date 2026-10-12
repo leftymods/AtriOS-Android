@@ -1,4 +1,0 @@
-@Anno
-class Simple {
-  @B(value = 1) int x;
-}

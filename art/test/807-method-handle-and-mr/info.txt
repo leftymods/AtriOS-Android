@@ -1,2 +1,0 @@
-Test stressing code generated for invoke-polymorphic instructions with
-respect to Marking Register (on architectures supporting MR).

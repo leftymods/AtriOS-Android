@@ -1,6 +1,0 @@
-#!/bin/bash
-
-DIRECTORY=$(cd `dirname $0` && pwd)
-PYTHONPATH=$DIRECTORY:$PYTHONPATH
-
-$*

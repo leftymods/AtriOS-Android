@@ -1,1 +1,0 @@
-Simple tests for passing int/float/long/double arguments.

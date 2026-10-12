@@ -1,2 +1,0 @@
-Tests a regression when inlining a method with constants would lead to duplicate
-instruction IDs in the caller graph.

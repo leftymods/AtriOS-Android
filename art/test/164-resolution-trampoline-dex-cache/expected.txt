@@ -1,3 +1,0 @@
-JNI_OnLoad called
-Base.foo() on MostDerived
-MostDerived.test(.) done.

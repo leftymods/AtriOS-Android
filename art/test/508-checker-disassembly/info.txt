@@ -1,1 +1,0 @@
-Check that inlining disassembly in the .cfg works correctly.

@@ -1,3 +1,0 @@
-This suite of tests is deprecated. Please add OpenGL CTS test to either:
-- dEQP for native tests
-- graphics/src/android/opengl/cts for Java bindings tests

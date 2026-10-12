@@ -1,9 +1,0 @@
-#!/bin/sh
-
-# Check -r option.
-
-. "${srcdir=.}/init.sh"
-
-run_prog ../sleep 0
-run_strace -r -eexecve ../sleep 1
-match_grep

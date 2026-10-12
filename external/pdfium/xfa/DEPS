@@ -1,5 +1,0 @@
-include_rules = [
-  '+core',
-  '+fxbarcode',
-  '+third_party/bigint'
-]

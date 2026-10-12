@@ -1,1 +1,0 @@
-didn't assert (is '-ea' implemented?)

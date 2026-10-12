@@ -1,7 +1,0 @@
-{
-    "target_models": {
-        "Nexus 5X": {
-            "ifname": "wlan0"
-        }
-    }
-}

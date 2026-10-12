@@ -1,6 +1,0 @@
-NullArrayFailInt2Object
-NullArrayFailObject2Int
-NullArraySuccessInt
-NullArraySuccessInt2Float
-NullArraySuccessShort
-NullArraySuccessRef

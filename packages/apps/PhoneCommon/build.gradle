@@ -1,9 +1,0 @@
-apply plugin: 'com.android.library'
-
-android {
-    sourceSets.main {
-        java.srcDirs = ['src']
-        manifest.srcFile 'AndroidManifest.xml'
-        res.srcDirs = ['res']
-    }
-}

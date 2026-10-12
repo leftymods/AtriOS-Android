@@ -1,1 +1,0 @@
-Simple test for static field access.

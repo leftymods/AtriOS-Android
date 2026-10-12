@@ -1,9 +1,0 @@
-#!/bin/sh
-
-# Check brk syscall decoding.
-
-. "${srcdir=.}/init.sh"
-
-run_prog > /dev/null
-run_strace -a10 -ebrk $args > "$EXP"
-match_grep "$LOG" "$EXP"

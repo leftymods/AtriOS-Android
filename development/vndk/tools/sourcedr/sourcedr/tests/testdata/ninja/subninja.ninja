@@ -1,5 +1,0 @@
-a = original
-
-subninja sub.ninja
-
-build out2 : phony prebuilt_out2

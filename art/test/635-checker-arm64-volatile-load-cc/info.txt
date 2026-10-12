@@ -1,3 +1,0 @@
-Regression test checking that the VIXL ARM64 scratch register pool is
-not exhausted when generating a volatile field load with a large
-offset with (Baker) read barriers (b/34726333).

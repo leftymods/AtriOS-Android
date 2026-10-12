@@ -1,1 +1,0 @@
-Tests native-method-bind callback and native method replacement.

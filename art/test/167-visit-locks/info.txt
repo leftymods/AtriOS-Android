@@ -1,1 +1,0 @@
-Regression test for b/68703210

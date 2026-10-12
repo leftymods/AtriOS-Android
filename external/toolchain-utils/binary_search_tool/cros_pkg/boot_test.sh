@@ -1,1 +1,0 @@
-../common/boot_test.sh

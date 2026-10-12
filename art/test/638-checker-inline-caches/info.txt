@@ -1,1 +1,0 @@
-Verify the use of inline caches in AOT mode.

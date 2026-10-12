@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+import sys
+import time
+import os
+import argparse
+
+FB_DEV = "/dev/fb4"
+WIDTH = 25
+HEIGHT = 16
+BPP = 3
+FRAME_SIZE = WIDTH * HEIGHT * BPP
+
+# Simple 5x7 bitmap digits (0-9 and colon)
+FONT = {
+    '0': [0b01110, 0b10001, 0b10011, 0b10101, 0b11001, 0b10001, 0b01110],
+    '1': [0b00100, 0b01100, 0b00100, 0b00100, 0b00100, 0b00100, 0b01110],
+    '2': [0b01110, 0b10001, 0b00001, 0b00110, 0b01000, 0b10000, 0b11111],
+    '3': [0b11110, 0b00001, 0b00001, 0b01110, 0b00001, 0b00001, 0b11110],
+    '4': [0b00010, 0b00110, 0b01010, 0b10010, 0b11111, 0b00010, 0b00010],
+    '5': [0b11111, 0b10000, 0b11110, 0b00001, 0b00001, 0b10001, 0b01110],
+    '6': [0b01110, 0b10000, 0b11110, 0b10001, 0b10001, 0b10001, 0b01110],
+    '7': [0b11111, 0b00001, 0b00010, 0b00100, 0b01000, 0b01000, 0b01000],
+    '8': [0b01110, 0b10001, 0b10001, 0b01110, 0b10001, 0b10001, 0b01110],
+    '9': [0b01110, 0b10001, 0b10001, 0b01111, 0b00001, 0b00001, 0b01110],
+    ':': [0b00000, 0b00100, 0b00100, 0b00000, 0b00100, 0b00100, 0b00000],
+}
+
+def set_pixel(buf, x, y, r, g, b):
+    if 0 <= x < WIDTH and 0 <= y < HEIGHT:
+        idx = (y * WIDTH + x) * BPP
+        buf[idx + 0] = int(r)
+        buf[idx + 1] = int(g)
+        buf[idx + 2] = int(b)
+
+def send_frame(buf):
+    try:
+        with open(FB_DEV, "wb") as f:
+            f.write(buf)
+            f.flush()
+        return True
+    except Exception as e:
+        print(f"Error writing to {FB_DEV}: {e}")
+        return False
+
+def clear_screen():
+    send_frame(bytearray(FRAME_SIZE))
+
+def fill_color(r, g, b):
+    buf = bytearray(FRAME_SIZE)
+    for i in range(WIDTH * HEIGHT):
+        buf[i * 3 + 0] = int(r)
+        buf[i * 3 + 1] = int(g)
+        buf[i * 3 + 2] = int(b)
+    send_frame(buf)
+
+def draw_clock():
+    now = time.strftime("%H:%M")
+    buf = bytearray(FRAME_SIZE)
+    # Positions for 4 digits (5x7) + colon (3x7) centered on 25x16
+    # 4 digits * 5 = 20, + colon (2) = 22 width. Offsets: x=1, 7, 12, 14, 20. y=4
+    x_positions = [1, 7, 12, 14, 20]
+    for char, x_start in zip(now, x_positions):
+        glyph = FONT.get(char, [0]*7)
+        for row_idx, row_bits in enumerate(glyph):
+            y = 4 + row_idx
+            for col_idx in range(5):
+                if (row_bits >> (4 - col_idx)) & 1:
+                    set_pixel(buf, x_start + col_idx, y, 255, 255, 255)
+    send_frame(buf)
+    print(f"[Screen Test] Displayed clock: {now}")
+
+def draw_eyes(blink=False):
+    buf = bytearray(FRAME_SIZE)
+    # Draw cute animated Alice eyes
+    # Left eye: x: 4..8, y: 4..10
+    # Right eye: x: 16..20, y: 4..10
+    if not blink:
+        for y in range(4, 11):
+            for x in range(4, 9):
+                set_pixel(buf, x, y, 180, 0, 255) # Purple eyes
+            for x in range(16, 21):
+                set_pixel(buf, x, y, 180, 0, 255)
+    else:
+        # Blink slit: y=7
+        for x in range(4, 9):
+            set_pixel(buf, x, 7, 180, 0, 255)
+        for x in range(16, 21):
+            set_pixel(buf, x, 7, 180, 0, 255)
+    send_frame(buf)
+
+def main():
+    parser = argparse.ArgumentParser(description="AtriOS Front Gowin 25x16 LED Matrix Diagnostic Utility")
+    parser.add_argument("--color", nargs=3, type=int, metavar=("R", "G", "B"), help="Fill screen with solid RGB")
+    parser.add_argument("--clock", action="store_true", help="Draw current time (HH:MM)")
+    parser.add_argument("--eyes", action="store_true", help="Animate cute Alice eyes")
+    parser.add_argument("--gradient", action="store_true", help="Display RGB test gradient")
+    parser.add_argument("--off", action="store_true", help="Clear / turn off screen")
+    args = parser.parse_args()
+
+    if args.off:
+        clear_screen()
+        print("[Screen Test] Screen cleared.")
+    elif args.color:
+        fill_color(*args.color)
+        print(f"[Screen Test] Screen filled with RGB={args.color}")
+    elif args.clock:
+        draw_clock()
+    elif args.eyes:
+        print("[Screen Test] Animating eyes...")
+        for _ in range(3):
+            draw_eyes(blink=False)
+            time.sleep(1.5)
+            draw_eyes(blink=True)
+            time.sleep(0.15)
+        draw_eyes(blink=False)
+    elif args.gradient:
+        buf = bytearray(FRAME_SIZE)
+        for y in range(HEIGHT):
+            for x in range(WIDTH):
+                r = int(255 * (x / WIDTH))
+                g = int(255 * (y / HEIGHT))
+                b = int(255 * (1.0 - x / WIDTH))
+                set_pixel(buf, x, y, r, g, b)
+        send_frame(buf)
+        print("[Screen Test] RGB gradient displayed.")
+    else:
+        print("[Screen Test] Running matrix self-test:")
+        fill_color(255, 0, 0)
+        time.sleep(0.5)
+        fill_color(0, 255, 0)
+        time.sleep(0.5)
+        fill_color(0, 0, 255)
+        time.sleep(0.5)
+        draw_clock()
+        print("[Screen Test] Test complete.")
+
+if __name__ == "__main__":
+    main()

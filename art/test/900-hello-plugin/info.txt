@@ -1,2 +1,0 @@
-Tests that agents and plugins are loaded.
-

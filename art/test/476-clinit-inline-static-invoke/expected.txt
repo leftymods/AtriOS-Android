@@ -1,2 +1,0 @@
-checkClinitCheckBeforeStaticMethodInvoke START
-checkClinitCheckBeforeStaticMethodInvoke PASSED

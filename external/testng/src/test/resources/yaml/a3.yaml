@@ -1,4 +1,0 @@
-name: a3
-verbose: 2
-
-suiteFiles: [ a3-a.xml, a3-b.xml ]

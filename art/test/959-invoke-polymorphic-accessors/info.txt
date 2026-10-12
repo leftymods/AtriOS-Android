@@ -1,1 +1,0 @@
-This test requires Jack with invoke-polymorphic support.
