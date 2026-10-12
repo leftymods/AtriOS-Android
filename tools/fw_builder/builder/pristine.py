@@ -23,14 +23,12 @@ DEFAULT_VENDOR_CACHE = PROJECT_ROOT / ".pristine_vendor"
 
 AMPACK_CANDIDATES = [
     PROJECT_ROOT.parent / "bin" / "ampack",
-    PROJECT_ROOT / "tools" / "bin" / "ampack",
-    "/home/lmods/AtriOS-Android/tools/bin/ampack",
+    PROJECT_ROOT.parent.parent / "tools" / "bin" / "ampack",
 ]
 
 IMGEXTRACTOR_CANDIDATES = [
     PROJECT_ROOT.parent / "bin" / "imgextractor.py",
-    PROJECT_ROOT / "tools" / "bin" / "imgextractor.py",
-    "/home/lmods/AtriOS-Android/tools/bin/imgextractor.py",
+    PROJECT_ROOT.parent.parent / "tools" / "bin" / "imgextractor.py",
 ]
 
 # The complete 21 items contained within stock yandex_1.99.img

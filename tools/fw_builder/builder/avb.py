@@ -16,8 +16,16 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 
 from builder.bridge import is_windows, win_to_wsl_path
 
-AVBTOOL_PATH = "/home/lmods/AtriOS-Android/external/avb/avbtool"
-DEFAULT_KEY_PATH = "keys/atristation_priv.pem"
+TOOL_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = TOOL_ROOT.parent.parent
+
+AVBTOOL_PATH = str(PROJECT_ROOT / "external" / "avb" / "avbtool")
+if not Path(AVBTOOL_PATH).exists():
+    AVBTOOL_PATH = str(PROJECT_ROOT / "tools" / "bin" / "avbtool")
+
+DEFAULT_KEY_PATH = str(TOOL_ROOT / "keys" / "atristation_priv.pem")
+if not Path(DEFAULT_KEY_PATH).exists():
+    DEFAULT_KEY_PATH = str(PROJECT_ROOT / "keys" / "atristation_priv.pem")
 BOOT_PARTITION_SIZE = 16777216  # 16 MB (0x1000000)
 AVB_MAGIC = b"AVB0"
 

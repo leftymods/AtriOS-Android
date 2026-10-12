@@ -265,8 +265,7 @@ def _find_ampack() -> Optional[str]:
         return found
     search_paths = [
         PROJECT_ROOT.parent / "bin" / "ampack",
-        PROJECT_ROOT / "tools" / "bin" / "ampack",
-        Path("/home/lmods/AtriOS-Android/tools/bin/ampack"),
+        PROJECT_ROOT.parent.parent / "tools" / "bin" / "ampack",
     ]
     for p in search_paths:
         if p.exists() and os.access(str(p), os.X_OK):
@@ -356,7 +355,7 @@ def _sign_staging(staging_dir: Path, workspace: Path, verbose: bool = False) -> 
     if not key_path.exists():
         key_path = PROJECT_ROOT / "keys" / "atristation_priv.pem"
     if not key_path.exists():
-        key_path = Path("/home/lmods/keys/atristation_priv.pem")
+        key_path = PROJECT_ROOT.parent.parent / "tools" / "fw_builder" / "keys" / "atristation_priv.pem"
 
     try:
         try:
@@ -432,8 +431,6 @@ def build_image(
         source_dir = staging_dir
     elif pristine_dir.exists() and any((pristine_dir / cp).exists() for cp in CRITICAL_PARTITIONS):
         source_dir = pristine_dir
-    elif Path("/home/lmods/yandex_repack").exists():
-        source_dir = Path("/home/lmods/yandex_repack")
     else:
         source_dir = pristine_dir
 

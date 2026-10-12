@@ -175,7 +175,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--mount-point",
         type=str,
         default=None,
-        help="Target mount directory (defaults to /home/lmods/AtriOS-Android/mnt_<part>/)",
+        help="Target mount directory (defaults to <project_root>/mnt_<part>/)",
     )
     p_mount.add_argument(
         "--ro",

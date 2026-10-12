@@ -15,7 +15,7 @@ MAKE_EXT4FS="$PROJECT_ROOT/tools/bin/make_ext4fs"
 
 echo "=========================================================="
 echo "          AtriOS Linux Master Build System                 "
-echo "        Target: Yandex Station 2 [Amlogic S905X3]         "
+echo "      Target: Yandex Station Max [Amlogic S905X3]         "
 echo "=========================================================="
 
 echo "[1/6] Verifying toolchain and build directories..."
@@ -25,9 +25,11 @@ if [ ! -d "$BUILDROOT_DIR" ]; then
     git clone --depth 1 -b 2024.02.x https://github.com/buildroot/buildroot.git "$BUILDROOT_DIR"
 fi
 
-# Ensure defconfig is available in Buildroot
-if [ -f "$BOARD_DIR/station2_defconfig" ] && [ ! -f "$BUILDROOT_DIR/configs/yandex_station2_defconfig" ]; then
-    cp "$BOARD_DIR/station2_defconfig" "$BUILDROOT_DIR/configs/yandex_station2_defconfig"
+# Ensure defconfig is available in Buildroot with dynamic OVERLAY_DIR
+if [ -f "$BOARD_DIR/station2_defconfig" ]; then
+    mkdir -p "$BUILDROOT_DIR/configs"
+    sed "s|BR2_ROOTFS_OVERLAY=.*|BR2_ROOTFS_OVERLAY=\"$OVERLAY_DIR\"|" \
+        "$BOARD_DIR/station2_defconfig" > "$BUILDROOT_DIR/configs/yandex_station2_defconfig"
 fi
 
 echo "[2/6] Updating kernel modules dependency map (depmod)..."

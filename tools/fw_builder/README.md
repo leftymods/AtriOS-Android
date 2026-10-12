@@ -128,7 +128,7 @@ python3 fw_builder.py clean
 
 ```bash
 # Клонирование и переход в репозиторий:
-cd /home/lmods/AtriOS-Android
+cd AtriOS-Android
 
 # Полная сборка с нуля:
 python3 tools/fw_builder/fw_builder.py build --from-scratch --auto

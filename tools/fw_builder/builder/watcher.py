@@ -160,7 +160,7 @@ def resolve_watch_directories(watch_dirs: Optional[List[str]] = None) -> List[Pa
     """
     Resolve target watch directories.
     Defaults to overlay/vendor, overlay/dts, overlay/boot,
-    plus active loop mount directories (e.g. /home/lmods/AtriOS-Android/mnt_vendor/).
+    plus active loop mount directories (e.g. <project_root>/mnt_vendor/).
     """
     project_root = Path(__file__).resolve().parent.parent
 

@@ -9,8 +9,17 @@ import os
 import subprocess
 from pathlib import Path
 
-AVBTOOL = "/home/lmods/AtriOS-Android/external/avb/avbtool"
-DEFAULT_KEY = "/home/lmods/keys/atristation_priv.pem"
+TOOL_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = TOOL_ROOT.parent.parent
+
+AVBTOOL = str(PROJECT_ROOT / "external" / "avb" / "avbtool")
+if not Path(AVBTOOL).exists():
+    AVBTOOL = str(PROJECT_ROOT / "tools" / "bin" / "avbtool")
+
+DEFAULT_KEY = str(TOOL_ROOT / "keys" / "atristation_priv.pem")
+if not Path(DEFAULT_KEY).exists():
+    DEFAULT_KEY = str(PROJECT_ROOT / "keys" / "atristation_priv.pem")
+
 ALGORITHM = "SHA256_RSA4096"
 
 PARTITION_SIZES = {
@@ -111,5 +120,5 @@ def sign_all_partitions(
 
 if __name__ == "__main__":
     import sys
-    target_dir = sys.argv[1] if len(sys.argv) > 1 else "/home/lmods/yandex_repack"
+    target_dir = sys.argv[1] if len(sys.argv) > 1 else str(TOOL_ROOT / "staging")
     sign_all_partitions(target_dir)

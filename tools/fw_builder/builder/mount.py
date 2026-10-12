@@ -13,6 +13,9 @@ SUPPORTED_PARTITIONS: Set[str] = {
     "vendor", "system", "odm", "product", "recovery", "dtbo", "logo", "boot"
 }
 
+TOOL_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = TOOL_ROOT.parent.parent
+
 _ACTIVE_MOUNTS: Dict[str, str] = {}
 
 
@@ -89,10 +92,11 @@ def find_partition_file(partition_name: str) -> Optional[Path]:
     part_clean = partition_name.lower().strip()
     target_filename = f"{part_clean}.PARTITION"
 
+    tool_root = Path(__file__).resolve().parent.parent
     candidates = [
-        Path("/home/lmods/yandex_repack") / target_filename,
-        Path(__file__).resolve().parent.parent / ".pristine_base" / target_filename,
-        Path("/home/lmods/stock_1.99_unpacked") / target_filename,
+        tool_root / "staging" / target_filename,
+        tool_root / ".pristine_base" / target_filename,
+        Path.cwd() / "staging" / target_filename,
         Path.cwd() / ".pristine_base" / target_filename,
     ]
 
@@ -125,7 +129,7 @@ def mount_partition(
     Mount ext4 partition image directly via loop device.
     Rejects path traversal and unsupported partition names.
     Checks if partition is already mounted, returning existing mount point without error.
-    Defaults mount point to /home/lmods/AtriOS-Android/mnt_<partition>/.
+    Defaults mount point to <project_root>/mnt_<partition>/.
     Executes passwordless sudo mount -o loop,rw <partition_file> <mount_point> (or ro).
     Returns mount point path. Handles errors with exit code 4 / informative exception.
     """
@@ -138,7 +142,7 @@ def mount_partition(
     if part_clean not in SUPPORTED_PARTITIONS:
         raise ValueError(f"Unsupported partition name: {partition_name}")
 
-    target_mnt = mount_point or f"/home/lmods/AtriOS-Android/mnt_{part_clean}"
+    target_mnt = mount_point or str(PROJECT_ROOT / f"mnt_{part_clean}")
 
     # 3. Check if partition is already mounted
     active = list_mounted_partitions()
@@ -196,7 +200,7 @@ def unmount_partition(partition_name: str, lazy: bool = False) -> bool:
     active = list_mounted_partitions()
     target_mnt = active.get(part_clean) or _ACTIVE_MOUNTS.get(part_clean)
     if not target_mnt:
-        default_mnt = f"/home/lmods/AtriOS-Android/mnt_{part_clean}"
+        default_mnt = str(PROJECT_ROOT / f"mnt_{part_clean}")
         if _is_mounted(default_mnt):
             target_mnt = default_mnt
         else:

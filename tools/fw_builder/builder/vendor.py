@@ -16,13 +16,15 @@ SPARSE_IMAGE_MAGIC = 0xED26FF3A
 
 
 def _find_make_ext4fs() -> Optional[str]:
-    """Find make_ext4fs binary in system or AmlogicKitchen."""
+    """Find make_ext4fs binary in tools/bin or system PATH."""
     found = shutil.which("make_ext4fs")
     if found:
         return found
+    tool_root = Path(__file__).resolve().parent.parent
+    repo_root = tool_root.parent.parent
     search_paths = [
-        Path("/home/lmods/AmlogicKitchen/bin/make_ext4fs"),
-        Path("/home/lmods/AtriOS-Android/tools/AmlogicKitchen/bin/make_ext4fs"),
+        tool_root.parent / "bin" / "make_ext4fs",
+        repo_root / "tools" / "bin" / "make_ext4fs",
     ]
     for p in search_paths:
         if p.exists() and os.access(str(p), os.X_OK):

@@ -17,14 +17,15 @@ BOOT_MAGIC = b"ANDROID!"
 
 
 def _find_tool(tool_name: str) -> Optional[str]:
-    """Locate binary tool on PATH or in well-known AmlogicKitchen directories."""
+    """Locate binary tool on PATH or in tools/bin directories."""
     found = shutil.which(tool_name)
     if found:
         return found
+    tool_root = Path(__file__).resolve().parent.parent
+    repo_root = tool_root.parent.parent
     search_paths = [
-        Path("/home/lmods/AmlogicKitchen/bin") / tool_name,
-        Path("/home/lmods/AtriOS-Android/tools/AmlogicKitchen/bin") / tool_name,
-        Path("/home/lmods/AtriOS-Android/system/core/mkbootimg") / tool_name,
+        tool_root.parent / "bin" / tool_name,
+        repo_root / "tools" / "bin" / tool_name,
     ]
     for p in search_paths:
         if p.exists() and os.access(str(p), os.X_OK):

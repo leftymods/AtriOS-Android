@@ -3,9 +3,9 @@ BR2_aarch64=y
 BR2_cortex_a53=y
 
 # System Configuration
-BR2_TARGET_GENERIC_HOSTNAME="atrios-station2"
-BR2_TARGET_GENERIC_ISSUE="Welcome to AtriOS Linux [Yandex Station 2]"
-BR2_ROOTFS_OVERLAY="/home/lmods/AtriOS-Android/board/yandex/station2/rootfs_overlay"
+BR2_TARGET_GENERIC_HOSTNAME="atrios-stationmax"
+BR2_TARGET_GENERIC_ISSUE="Welcome to AtriOS Linux [Yandex Station Max S905X3]"
+BR2_ROOTFS_OVERLAY="../board/yandex/station2/rootfs_overlay"
 
 # Toolchain
 BR2_TOOLCHAIN_BUILDROOT_GLIBC=y

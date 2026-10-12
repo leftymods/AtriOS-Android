@@ -59,7 +59,7 @@ def wsl_to_win_path(path: str) -> str:
     Convert a WSL filesystem path to its Windows equivalent.
     Example:
         /mnt/c/Users/ggala/Desktop/testFW -> C:\\Users\\ggala\\Desktop\\testFW
-        /home/lmods/... -> \\\\wsl$\\Ubuntu-22.04\\home\\lmods\\...
+        /home/user/... -> \\\\wsl$\\Ubuntu-22.04\\home\\user\\...
     """
     if not path:
         return ""
@@ -78,7 +78,7 @@ def wsl_to_win_path(path: str) -> str:
     if re.match(r"^[a-zA-Z]:", p):
         return p.replace("/", "\\")
 
-    # Linux native path outside /mnt (e.g. /home/lmods/...)
+    # Linux native path outside /mnt (e.g. /home/user/...)
     if p.startswith("/"):
         p_win = p.replace("/", "\\")
         return f"\\\\wsl$\\Ubuntu-22.04{p_win}"
