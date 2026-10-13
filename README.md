@@ -61,19 +61,16 @@
 
 ## Built-in CLI Tooling & Daemons
 
-В состав rootfs включены готовые диагностические утилиты и сервисы в `/usr/bin/`:
+В состав rootfs включены объединенные модульные утилиты и сервисы в `/usr/bin/`:
 
-| Utility | Description | Example Command |
+| Unified Tool | Subsystems Covered | Example Commands |
 |---|---|---|
-| `atrios-test-buttons` | Мониторинг кнопок Алисы, Mic Mute, крутилки и датчика света | `atrios-test-buttons` |
-| `atrios-rotaryd` | Демон громкости на кольце и софтового мута (красное кольцо) | `atrios-rotaryd &` |
-| `atrios-test-ring` | Тест эффектов 24 RGB-каналов (радуга, дуга, заливка, выключение) | `atrios-test-ring rainbow` |
-| `atrios-test-screen` | Тест монохромного экрана 25x16 (бегущая строка, часы, глаза Алисы, смайлы, поканальная яркость) | `atrios-test-screen ticker "ATRIOS"` |
+| **`atrios-light`** | Монохромный экран 25x16 (Gowin FPGA), RGB-кольцо (IS31FL3236A) и датчик света (LTR-308ALS) | `atrios-light screen clock`<br>`atrios-light screen eyes open`<br>`atrios-light ring rainbow`<br>`atrios-light ring red`<br>`atrios-light sensor` |
+| **`atrios-audio`** | Динамики, усилители Silergy SY6045S, 8-канальный массив микрофонов ES7210, громкость и софтовый мут | `atrios-audio test`<br>`atrios-audio play /path/file.wav`<br>`atrios-audio record 3 /tmp/rec.wav`<br>`atrios-audio volume 80%`<br>`atrios-audio mute on` |
+| **`atrios-wireless`** | Wi-Fi (Realtek RTL8822CS SDIO), Bluetooth (UART `/dev/ttyS1`), Zigbee (EFR32 `/dev/ttyAML4`) | `atrios-wireless status`<br>`atrios-wireless wifi scan`<br>`atrios-wireless wifi connect "SSID" "Pass"`<br>`atrios-wireless bt status`<br>`atrios-wireless zigbee reset` |
+| **`atrios-input`** | Мониторинг кнопок Алисы, Mic Mute, крутилки громкости и пультов в реальном времени | `atrios-input` |
 | `atrios-screend` | Фоновый демон часов (HH:MM) на экране 25x16 | `atrios-screend &` |
-| `atrios-test-sensor` | Считывание люксов LTR-308ALS в реальном времени | `atrios-test-sensor` |
-| `atrios-test-audio` | Генератор тона в динамики и запись с микрофонов (ALSA plug) | `atrios-test-audio` |
-| `atrios-wifi-power` | Управление питанием SDIO-шины Wi-Fi контроллера | `atrios-wifi-power 1` |
-| `atrios-test-wifi` | Диагностика питания SDIO, сканирование и подключение Wi-Fi | `atrios-test-wifi` |
+| `atrios-rotaryd` | Фоновый демон громкости на кольце и переключения мута микрофонов | `atrios-rotaryd &` |
 
 ---
 

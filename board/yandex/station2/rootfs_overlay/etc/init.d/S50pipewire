@@ -6,6 +6,8 @@ case "$1" in
     echo "[AtriOS] Starting PipeWire audio engine..."
     mkdir -p /var/run/pipewire
     export XDG_RUNTIME_DIR=/var/run/pipewire
+    export DBUS_SESSION_BUS_ADDRESS="unix:path=/var/run/dbus/system_bus_socket"
+    export DBUS_SYSTEM_BUS_ADDRESS="unix:path=/var/run/dbus/system_bus_socket"
     chmod 0700 /var/run/pipewire
 
     if command -v pipewire >/dev/null 2>&1; then

@@ -2,18 +2,15 @@
 """
 AtriOS Front Gowin 25x16 Monochrome LED Matrix Diagnostic & Animation Utility
 Hardware:
-  - Controller: Gowin FPGA over SPI (/dev/fb4)
   - Display: 25 columns x 16 rows monochrome white LED matrix
-  - Pixel Format: 8-bit individual brightness (0..255) per LED
-  - Driver Interface: gowin_led_device driver exposes RGB888 (24-bpp) framebuffer
-  - Frame buffer size: exactly 1200 bytes (25 * 16 * 3)
-  - Mapping: Driver computes LED brightness = max(R, G, B) for each (x, y) pixel
+  - Kernel Driver: gowin_led_device (/dev/fb4)
+  - Framebuffer format: RGB888 (24-bpp), 1200 bytes (25 * 16 * 3)
+  - Brightness: 8-bit individual LED intensity (0..255)
 """
 
 import sys
 import os
 import time
-import argparse
 
 FB_DEV = "/dev/fb4"
 WIDTH = 25
@@ -21,8 +18,7 @@ HEIGHT = 16
 BPP = 3
 FRAME_SIZE = WIDTH * HEIGHT * BPP
 
-# 5x7 ASCII bitmap font (width=5, height=7)
-FONT = {
+FONT_5X7 = {
     ' ': [0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000],
     '0': [0b01110, 0b10001, 0b10011, 0b10101, 0b11001, 0b10001, 0b01110],
     '1': [0b00100, 0b01100, 0b00100, 0b00100, 0b00100, 0b00100, 0b01110],
@@ -68,7 +64,6 @@ FONT = {
 }
 
 def set_pixel(buf, x, y, brightness):
-    """Set individual monochrome LED brightness (0..255) at (x, y)."""
     if 0 <= x < WIDTH and 0 <= y < HEIGHT:
         val = max(0, min(255, int(brightness)))
         offset = (y * WIDTH + x) * BPP
@@ -76,16 +71,7 @@ def set_pixel(buf, x, y, brightness):
         buf[offset + 1] = val
         buf[offset + 2] = val
 
-def get_pixel(buf, x, y):
-    if 0 <= x < WIDTH and 0 <= y < HEIGHT:
-        offset = (y * WIDTH + x) * BPP
-        return buf[offset]
-    return 0
-
 def send_frame(buf):
-    """Write exact 1200-byte frame to Gowin framebuffer."""
-    if len(buf) != FRAME_SIZE:
-        print(f"[!] Warning: frame length is {len(buf)}, expected {FRAME_SIZE}", flush=True)
     try:
         with open(FB_DEV, "wb") as f:
             f.write(buf[:FRAME_SIZE])
@@ -113,7 +99,7 @@ def draw_clock(brightness=220):
     buf = bytearray(FRAME_SIZE)
     x_positions = [1, 7, 12, 14, 20]
     for char, x_start in zip(now, x_positions):
-        glyph = FONT.get(char, [0]*7)
+        glyph = FONT_5X7.get(char, [0]*7)
         for row_idx, row_bits in enumerate(glyph):
             y = 4 + row_idx
             for col_idx in range(5):
@@ -123,10 +109,7 @@ def draw_clock(brightness=220):
     print(f"[Screen] Clock displayed: {now} (brightness={brightness}/255)", flush=True)
 
 def draw_eyes(state="open", brightness=220):
-    """Cute animated Alice/robot eyes on 25x16 matrix."""
     buf = bytearray(FRAME_SIZE)
-    dim = int(brightness * 0.4)
-
     if state == "open":
         for y in range(4, 11):
             for x in range(4, 9):
@@ -135,35 +118,30 @@ def draw_eyes(state="open", brightness=220):
                 set_pixel(buf, x, y, brightness)
         set_pixel(buf, 5, 5, 255)
         set_pixel(buf, 17, 5, 255)
-
     elif state == "blink":
         for x in range(3, 10):
             set_pixel(buf, x, 7, brightness)
         for x in range(15, 22):
             set_pixel(buf, x, 7, brightness)
-
     elif state == "left":
         for y in range(4, 11):
             for x in range(2, 7):
                 set_pixel(buf, x, y, brightness)
             for x in range(14, 19):
                 set_pixel(buf, x, y, brightness)
-
     elif state == "right":
         for y in range(4, 11):
             for x in range(6, 11):
                 set_pixel(buf, x, y, brightness)
             for x in range(18, 23):
                 set_pixel(buf, x, y, brightness)
-
     elif state == "wink":
         for y in range(4, 11):
             for x in range(4, 9):
                 set_pixel(buf, x, y, brightness)
         for x in range(15, 22):
             set_pixel(buf, x, 7, brightness)
-
-    elif state == "happy":
+    elif state in ("happy", "smile"):
         for x in range(4, 9):
             set_pixel(buf, x, 4, brightness)
         set_pixel(buf, 3, 5, brightness)
@@ -172,12 +150,36 @@ def draw_eyes(state="open", brightness=220):
             set_pixel(buf, x, 4, brightness)
         set_pixel(buf, 15, 5, brightness)
         set_pixel(buf, 21, 5, brightness)
-
     send_frame(buf)
     print(f"[Screen] Eyes displayed: {state} (brightness={brightness}/255)", flush=True)
 
-def test_gradient():
-    """Demonstrates individual 8-bit LED brightness control (0..255)."""
+def draw_ticker(text, brightness=220, speed=0.07):
+    text = " " + text.upper() + " "
+    total_cols = len(text) * 6
+    text_grid = [[0]*total_cols for _ in range(7)]
+    for char_idx, char in enumerate(text):
+        glyph = FONT_5X7.get(char, [0]*7)
+        for r, row_bits in enumerate(glyph):
+            for c in range(5):
+                if (row_bits >> (4 - c)) & 1:
+                    text_grid[r][char_idx * 6 + c] = 1
+
+    print(f"[Screen] Scrolling text: \"{text.strip()}\"...", flush=True)
+    try:
+        for offset in range(total_cols - WIDTH + 1):
+            buf = bytearray(FRAME_SIZE)
+            for r in range(7):
+                y = 4 + r
+                for x in range(WIDTH):
+                    if text_grid[r][offset + x]:
+                        set_pixel(buf, x, y, brightness)
+            send_frame(buf)
+            time.sleep(speed)
+    except KeyboardInterrupt:
+        pass
+    clear_screen()
+
+def draw_gradient():
     buf = bytearray(FRAME_SIZE)
     for y in range(HEIGHT):
         for x in range(WIDTH):
@@ -187,62 +189,102 @@ def test_gradient():
     print("[Screen] Gradient test pattern rendered (2D intensity ramp).", flush=True)
 
 def main():
-    parser = argparse.ArgumentParser(description="AtriOS Gowin 25x16 Matrix Controller")
-    parser.add_argument("--clear", action="store_true", help="Turn off all LEDs")
-    parser.add_argument("--fill", type=int, nargs="?", const=200, help="Fill all LEDs with brightness (0..255)")
-    parser.add_argument("--clock", action="store_true", help="Display current system time")
-    parser.add_argument("--eyes", type=str, nargs="?", const="open",
-                        choices=["open", "blink", "left", "right", "wink", "happy", "animate"],
-                        help="Display animated eyes")
-    parser.add_argument("--pixel", type=int, nargs="+", help="X Y [brightness]: light single pixel")
-    parser.add_argument("--row", type=int, nargs="+", help="Y [brightness]: light entire row")
-    parser.add_argument("--col", type=int, nargs="+", help="X [brightness]: light entire column")
-    parser.add_argument("--gradient", action="store_true", help="Test individual LED brightness levels")
-    parser.add_argument("--brightness", type=int, default=220, help="Global brightness level (0..255)")
+    args = sys.argv[1:]
+    if not args:
+        draw_clock(220)
+        return
 
-    args = parser.parse_args()
+    cmd = args[0].lstrip("-").lower()
+    rest = args[1:]
 
-    if args.clear:
-        clear_screen()
-    elif args.fill is not None:
-        fill_screen(args.fill)
-    elif args.clock:
-        draw_clock(args.brightness)
-    elif args.gradient:
-        test_gradient()
-    elif args.eyes:
-        if args.eyes == "animate":
-            print("[Screen] Running Alice eye animation sequence...", flush=True)
-            for state in ["open", "wink", "open", "blink", "open", "left", "right", "happy", "open"]:
-                draw_eyes(state, args.brightness)
-                time.sleep(0.4 if state != "open" else 1.2)
+    if cmd in ("clock",):
+        b = int(rest[0]) if rest else 220
+        draw_clock(b)
+
+    elif cmd in ("ticker", "text"):
+        text = rest[0] if rest else "HELLO"
+        b = int(rest[1]) if len(rest) > 1 else 220
+        draw_ticker(text, b)
+
+    elif cmd in ("eyes",):
+        state = rest[0] if rest else "open"
+        b = int(rest[1]) if len(rest) > 1 else 220
+        if state == "animate":
+            for s in ["open", "wink", "open", "blink", "open", "left", "right", "happy", "open"]:
+                draw_eyes(s, b)
+                time.sleep(0.4 if s != "open" else 1.2)
         else:
-            draw_eyes(args.eyes, args.brightness)
-    elif args.pixel:
-        x, y = args.pixel[0], args.pixel[1]
-        b = args.pixel[2] if len(args.pixel) > 2 else args.brightness
-        buf = bytearray(FRAME_SIZE)
-        set_pixel(buf, x, y, b)
-        send_frame(buf)
-        print(f"[Screen] Lit pixel ({x}, {y}) at brightness {b}/255", flush=True)
-    elif args.row:
-        y = args.row[0]
-        b = args.row[1] if len(args.row) > 1 else args.brightness
-        buf = bytearray(FRAME_SIZE)
-        for x in range(WIDTH):
+            draw_eyes(state, b)
+
+    elif cmd in ("smile", "happy"):
+        b = int(rest[0]) if rest else 220
+        draw_eyes("happy", b)
+
+    elif cmd in ("clear", "off"):
+        clear_screen()
+
+    elif cmd in ("fill",):
+        b = int(rest[0]) if rest else 200
+        fill_screen(b)
+
+    elif cmd in ("pixel",):
+        if len(rest) >= 2:
+            x, y = int(rest[0]), int(rest[1])
+            b = int(rest[2]) if len(rest) > 2 else 220
+            buf = bytearray(FRAME_SIZE)
             set_pixel(buf, x, y, b)
-        send_frame(buf)
-        print(f"[Screen] Lit row {y} at brightness {b}/255", flush=True)
-    elif args.col:
-        x = args.col[0]
-        b = args.col[1] if len(args.col) > 1 else args.brightness
-        buf = bytearray(FRAME_SIZE)
-        for y in range(HEIGHT):
-            set_pixel(buf, x, y, b)
-        send_frame(buf)
-        print(f"[Screen] Lit column {x} at brightness {b}/255", flush=True)
+            send_frame(buf)
+            print(f"[Screen] Pixel ({x}, {y}) set to {b}/255", flush=True)
+        else:
+            print("Usage: atrios-test-screen pixel <x> <y> [brightness]", flush=True)
+
+    elif cmd in ("row",):
+        if rest:
+            y = int(rest[0])
+            b = int(rest[1]) if len(rest) > 1 else 220
+            buf = bytearray(FRAME_SIZE)
+            for x in range(WIDTH):
+                set_pixel(buf, x, y, b)
+            send_frame(buf)
+            print(f"[Screen] Row {y} set to {b}/255", flush=True)
+
+    elif cmd in ("col",):
+        if rest:
+            x = int(rest[0])
+            b = int(rest[1]) if len(rest) > 1 else 220
+            buf = bytearray(FRAME_SIZE)
+            for y in range(HEIGHT):
+                set_pixel(buf, x, y, b)
+            send_frame(buf)
+            print(f"[Screen] Column {x} set to {b}/255", flush=True)
+
+    elif cmd in ("gradient",):
+        draw_gradient()
+
+    elif cmd in ("test",):
+        print("[Screen] Running comprehensive self-test suite...", flush=True)
+        fill_screen(100)
+        time.sleep(0.8)
+        draw_gradient()
+        time.sleep(1.0)
+        draw_eyes("open", 220)
+        time.sleep(1.0)
+        draw_eyes("happy", 220)
+        time.sleep(1.0)
+        draw_ticker("ATRIOS", 220)
+        draw_clock(220)
+
     else:
-        draw_clock(args.brightness)
+        print(f"Unknown command: '{cmd}'. Available commands:")
+        print("  atrios-test-screen clock              - Display current time")
+        print("  atrios-test-screen ticker \"TEXT\"     - Scrolling text banner")
+        print("  atrios-test-screen eyes [state]       - Alice eyes (open, blink, wink, left, right, happy, animate)")
+        print("  atrios-test-screen smile              - Smiling face")
+        print("  atrios-test-screen fill [brightness]  - Fill screen (0..255)")
+        print("  atrios-test-screen pixel <x> <y> [b]  - Set single LED brightness")
+        print("  atrios-test-screen gradient           - 2D gradient test")
+        print("  atrios-test-screen clear / off        - Turn off screen")
+        print("  atrios-test-screen test               - Run full demonstration")
 
 if __name__ == "__main__":
     main()

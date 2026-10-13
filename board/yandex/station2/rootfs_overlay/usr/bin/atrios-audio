@@ -1,0 +1,130 @@
+#!/bin/sh
+# AtriOS Unified Audio & Amplifier Management Utility (atrios-audio)
+# Controls:
+#   - AMLAUGESOUND hardware sound card (DAC / ADC)
+#   - Silergy SY6045S Woofer (2-002b) and Tweeters (2-002a) amplifiers
+#   - 8-channel Everest ES7210 microphone array
+#   - System volume and software mic mute
+
+ACTION="${1:-test}"
+CARD="AMLAUGESOUND"
+
+case "$ACTION" in
+  test)
+    echo "=========================================================="
+    echo "          AtriOS Unified Audio & Mic Diagnostic           "
+    echo "=========================================================="
+    echo "[ALSA Sound Cards]:"
+    cat /proc/asound/cards 2>/dev/null || echo "No cards found"
+    echo ""
+    echo "[Hardware Amplifiers (Silergy SY6045S)]:"
+    if [ -d /sys/bus/i2c/drivers/sy6045s ]; then
+      for inst in /sys/bus/i2c/drivers/sy6045s/2-00*; do
+        if [ -d "$inst" ]; then
+          bname=$(basename "$inst")
+          echo "  * Instance $bname: Registered"
+        fi
+      done
+    else
+      echo "  * SY6045S driver not loaded"
+    fi
+    echo ""
+    echo "[Playback Test]: Playing test chime on speakers..."
+    if command -v speaker-test >/dev/null 2>&1; then
+      speaker-test -D default -c 2 -r 48000 -t sine -f 440 -l 1 2>/dev/null || \
+      speaker-test -D playback_plug -c 2 -r 48000 -t sine -f 440 -l 1 2>/dev/null || \
+      speaker-test -D "hw:$CARD,0" -c 2 -r 48000 -t sine -f 440 -l 1 2>/dev/null || true
+    elif command -v aplay >/dev/null 2>&1; then
+      aplay -D default /usr/share/sounds/alsa/Front_Center.wav 2>/dev/null || \
+      aplay -D "hw:$CARD,0" /usr/share/sounds/alsa/Front_Center.wav 2>/dev/null || true
+    fi
+    echo ""
+    echo "[Microphone Test]: Recording 3 seconds from 8-ch mic array..."
+    REC_FILE="/tmp/atrios_mic_test.wav"
+    rm -f "$REC_FILE"
+    if command -v arecord >/dev/null 2>&1; then
+      arecord -D capture_plug -c 8 -r 48000 -f S32_LE -d 3 "$REC_FILE" 2>/dev/null || \
+      arecord -D default -c 2 -r 48000 -f S16_LE -d 3 "$REC_FILE" 2>/dev/null || \
+      arecord -D "hw:$CARD,1" -c 8 -r 48000 -f S32_LE -d 3 "$REC_FILE" 2>/dev/null || true
+      if [ -f "$REC_FILE" ]; then
+        SIZE=$(ls -l "$REC_FILE" | awk '{print $5}')
+        echo "[OK] Mic capture successful: $REC_FILE ($SIZE bytes)."
+      else
+        echo "[WARN] Could not capture from microphone array."
+      fi
+    fi
+    echo "=========================================================="
+    ;;
+
+  play)
+    WAV="${2:-/usr/share/sounds/alsa/Front_Center.wav}"
+    if [ ! -f "$WAV" ]; then
+      echo "File not found: $WAV"
+      exit 1
+    fi
+    echo "Playing $WAV..."
+    aplay -D "hw:$CARD,0" "$WAV" 2>/dev/null || aplay -D default "$WAV"
+    ;;
+
+  record)
+    DUR="${2:-3}"
+    OUT="${3:-/tmp/recording_8ch.wav}"
+    echo "Recording $DUR seconds to $OUT..."
+    arecord -D "hw:$CARD,1" -c 8 -r 48000 -f S32_LE -d "$DUR" "$OUT" 2>/dev/null || \
+    arecord -D capture_plug -c 8 -r 48000 -f S32_LE -d "$DUR" "$OUT"
+    echo "Saved to $OUT ($(ls -l "$OUT" | awk '{print $5}') bytes)."
+    ;;
+
+  volume)
+    VAL="$2"
+    if [ -z "$VAL" ]; then
+      amixer -c "$CARD" sget 'Master' 2>/dev/null || amixer -c 0 sget 'Master' 2>/dev/null || true
+    else
+      echo "Setting volume to $VAL..."
+      amixer -c "$CARD" sset 'Master' "$VAL" 2>/dev/null || true
+      amixer -c 0 sset 'Master' "$VAL" 2>/dev/null || true
+      if command -v wpctl >/dev/null 2>&1; then
+        wpctl set-volume @DEFAULT_AUDIO_SINK@ "$VAL" 2>/dev/null || true
+      fi
+      if [ -x /usr/bin/atrios-light ]; then
+        num=$(echo "$VAL" | tr -dc '0-9')
+        [ -n "$num" ] && /usr/bin/atrios-light ring volume "$num" 2>/dev/null || true
+      fi
+    fi
+    ;;
+
+  mute)
+    STATE="$2"
+    if [ "$STATE" = "off" ] || [ "$STATE" = "0" ] || [ "$STATE" = "unmute" ]; then
+      echo "Unmuting microphone array..."
+      amixer -c "$CARD" sset 'Capture' unmute 2>/dev/null || true
+      amixer -c "$CARD" sset 'Capture' 100% 2>/dev/null || true
+      wpctl set-mute @DEFAULT_AUDIO_SOURCE@ 0 2>/dev/null || true
+      [ -x /usr/bin/atrios-light ] && /usr/bin/atrios-light ring off 2>/dev/null || true
+    else
+      echo "Muting microphone array (Ring -> RED)..."
+      amixer -c "$CARD" sset 'Capture' mute 2>/dev/null || true
+      amixer -c "$CARD" sset 'Capture' 0% 2>/dev/null || true
+      wpctl set-mute @DEFAULT_AUDIO_SOURCE@ 1 2>/dev/null || true
+      [ -x /usr/bin/atrios-light ] && /usr/bin/atrios-light ring red 2>/dev/null || true
+    fi
+    ;;
+
+  amps)
+    echo "Re-applying SY6045S settings..."
+    /etc/init.d/S03amplifiers start
+    ;;
+
+  *)
+    echo "Usage: atrios-audio <command> [args]"
+    echo "Commands:"
+    echo "  atrios-audio test                   - Full playback & 8-channel mic array test"
+    echo "  atrios-audio play [file.wav]        - Play audio through speakers"
+    echo "  atrios-audio record [sec] [out.wav] - Record 8-channel audio from mic array"
+    echo "  atrios-audio volume [0..100%]       - Get/set master volume"
+    echo "  atrios-audio mute [on|off]          - Mute/unmute mic array with red ring"
+    echo "  atrios-audio amps                   - Re-apply amplifier firmware settings"
+    exit 1
+    ;;
+esac
+exit 0
