@@ -17,14 +17,14 @@ case "$CMD" in
     if ip link show wlan0 >/dev/null 2>&1; then
       STATE=$(ip link show wlan0 | grep -o 'state [A-Z]*' | awk '{print $2}')
       IP=$(ip -4 addr show wlan0 | grep -o 'inet [0-9.]*' | awk '{print $2}')
-      echo "  * Interface wlan0: \033[1;32mUP\033[0m (State: ${STATE:-UNKNOWN})"
+      echo "  * Interface wlan0: UP (State: ${STATE:-UNKNOWN})"
       if [ -n "$IP" ]; then
-        echo "  * IP Address: \033[1;36m$IP\033[0m"
+        echo "  * IP Address: $IP"
       else
         echo "  * IP Address: Not assigned (disconnected)"
       fi
     else
-      echo "  * Interface wlan0: \033[1;31mNOT FOUND\033[0m (Check SDIO power or 88x2es.ko)"
+      echo "  * Interface wlan0: NOT FOUND (Check SDIO power or 88x2es.ko)"
     fi
 
     # Bluetooth Status
@@ -32,9 +32,9 @@ case "$CMD" in
     echo "[2. Bluetooth (Realtek RTL8822CS UART)]:"
     if command -v hciconfig >/dev/null 2>&1 && hciconfig hci0 >/dev/null 2>&1; then
       BT_STATE=$(hciconfig hci0 | grep -o 'UP RUNNING\|DOWN')
-      echo "  * HCI Device: \033[1;32mhci0 ($BT_STATE)\033[0m"
+      echo "  * HCI Device: hci0 ($BT_STATE)"
     elif [ -e /sys/class/bluetooth/hci0 ]; then
-      echo "  * HCI Device: \033[1;32mhci0 registered in sysfs\033[0m"
+      echo "  * HCI Device: hci0 registered in sysfs"
     else
       echo "  * HCI Device: Not attached. Available UART: /dev/ttyS1"
     fi
@@ -50,12 +50,12 @@ case "$CMD" in
       fi
     done
     if [ -n "$ZB_DEV" ]; then
-      echo "  * Coordinator UART: \033[1;32m$ZB_DEV\033[0m"
+      echo "  * Coordinator UART: $ZB_DEV"
     else
       echo "  * Coordinator UART: Not found (/dev/ttyAML4 / /dev/ttyS4)"
     fi
     if [ -d /sys/devices/platform/zigbee ]; then
-      echo "  * Driver: \033[1;32mzigbee-control registered\033[0m"
+      echo "  * Driver: zigbee-control registered"
     fi
     echo "=========================================================="
     ;;
@@ -73,14 +73,14 @@ case "$CMD" in
     elif [ "$SUBCMD" = "power" ]; then
       STATE="${3:-1}"
       echo "Setting Wi-Fi SDIO power to $STATE..."
-      if [ -x /usr/bin/atrios-wifi-power ]; then
-        /usr/bin/atrios-wifi-power "$STATE"
+      if [ -x /usr/lib/atrios/wifi-power ]; then
+        /usr/lib/atrios/wifi-power "$STATE"
       fi
     elif [ "$SUBCMD" = "connect" ]; then
       SSID="$3"
       PASS="$4"
       if [ -z "$SSID" ]; then
-        echo "Usage: atrios-wireless wifi connect <SSID> [Password]"
+        echo "Usage: atrios wifi connect <SSID> [Password]"
         exit 1
       fi
       echo "Connecting to '$SSID'..."
@@ -104,7 +104,7 @@ case "$CMD" in
       wpa_supplicant -B -i wlan0 -c "$CONF" -D nl80211,wext
       sleep 2
       udhcpc -i wlan0 -n -q -t 5 2>/dev/null &
-      echo "Connection requested. Run 'atrios-wireless wifi' to check status."
+      echo "Connection requested. Run 'atrios wifi' to check status."
     else
       ip -4 addr show wlan0 2>/dev/null || ip link show wlan0 2>/dev/null
     fi
@@ -152,15 +152,19 @@ case "$CMD" in
     if [ "$SUBCMD" = "reset" ]; then
       echo "Pulsing EFR32 Zigbee hardware reset pin..."
       # Use sysfs zigbee-control if available
-      for p in /sys/devices/platform/zigbee/zb-reset /sys/class/gpio/zb-reset; do
-        if [ -e "$p" ]; then
-          echo 0 > "$p" 2>/dev/null
-          usleep 50000 2>/dev/null || sleep 1
-          echo 1 > "$p" 2>/dev/null
-          echo "[OK] Reset pulsed via $p"
-          break
-        fi
-      done
+      P=/sys/devices/platform/zigbee/zb-reset
+      if [ -d "$P" ]; then
+        echo out > "$P/direction" 2>/dev/null
+        echo 0 > "$P/value"
+        sleep 1
+        echo 1 > "$P/value"
+        echo "[OK] Reset pulsed via $P"
+      elif [ -e "$P" ]; then
+        echo 0 > "$P"; sleep 1; echo 1 > "$P"
+        echo "[OK] Reset pulsed via $P"
+      else
+        echo "Error: zigbee-control sysfs not found"
+      fi
     elif [ "$SUBCMD" = "ping" ] || [ "$SUBCMD" = "probe" ]; then
       if [ -z "$ZB_DEV" ]; then
         echo "Error: Zigbee UART not found (/dev/ttyAML4 / /dev/ttyS4)"
@@ -178,16 +182,16 @@ case "$CMD" in
     ;;
 
   *)
-    echo "Usage: atrios-wireless <wifi|bt|zigbee|status> [args]"
+    echo "Usage: atrios <wifi|bt|zigbee|status> [args]"
     echo "Commands:"
-    echo "  atrios-wireless status                         - Overview of Wi-Fi, BT and Zigbee"
-    echo "  atrios-wireless wifi scan                      - Scan for Wi-Fi access points"
-    echo "  atrios-wireless wifi connect <SSID> [Password] - Connect to Wi-Fi"
-    echo "  atrios-wireless wifi power [1|0]               - Toggle SDIO bus power"
-    echo "  atrios-wireless bt status                      - Show Bluetooth HCI devices"
-    echo "  atrios-wireless bt scan                        - Scan Bluetooth devices"
-    echo "  atrios-wireless zigbee reset                   - Hardware reset EFR32 coordinator"
-    echo "  atrios-wireless zigbee ping                    - Test EFR32 serial connectivity"
+    echo "  atrios status                         - Overview of Wi-Fi, BT and Zigbee"
+    echo "  atrios wifi scan                      - Scan for Wi-Fi access points"
+    echo "  atrios wifi connect <SSID> [Password] - Connect to Wi-Fi"
+    echo "  atrios wifi power [1|0]               - Toggle SDIO bus power"
+    echo "  atrios bt status                      - Show Bluetooth HCI devices"
+    echo "  atrios bt scan                        - Scan Bluetooth devices"
+    echo "  atrios zigbee reset                   - Hardware reset EFR32 coordinator"
+    echo "  atrios zigbee ping                    - Test EFR32 serial connectivity"
     exit 1
     ;;
 esac

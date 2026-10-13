@@ -3,7 +3,7 @@
 AtriOS Physical Controls & Software Mic Mute Diagnostic Utility
 Tests:
   - Top Button 1: Assistant / Alice (KEY_VOICECOMMAND [582] / KEY_POWER [116])
-  - Top Button 2: Microphone Mute (KEY_MICMUTE [248]) -> Toggles Software Mute + Red LED Ring
+  - Top Button 2: Microphone Mute (KEY_MICMUTE [248]) -> Toggles Software Mute
   - Rotary Knob: Volume up / down (KEY_PAGEUP [104] / KEY_PAGEDOWN [109])
   - Ambient Light Sensor (LTR-308ALS live lux check)
   - Remote control keys (Bluetooth / IR)
@@ -57,7 +57,7 @@ def set_ring_red(active=True):
     try:
         with open(FB_RING, "wb") as f:
             if active:
-                f.write(bytes([255, 0, 0]) * NUM_LEDS)
+                f.write(b"\x00" * (NUM_LEDS * 3))
             else:
                 f.write(b"\x00" * (NUM_LEDS * 3))
             f.flush()
@@ -70,7 +70,7 @@ def toggle_software_mic_mute(is_muted):
     When is_muted is True:
       - PipeWire default audio source muted (val=1)
       - ALSA AMLAUGESOUND capture channels muted & zeroed
-      - LED ring illuminated solid RED
+      - no LED ring indication
     When is_muted is False:
       - PipeWire unmuted (val=0)
       - ALSA AMLAUGESOUND unmuted (100%)

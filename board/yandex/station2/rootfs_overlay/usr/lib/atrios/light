@@ -352,7 +352,7 @@ def main():
                 screen_send_frame(buf)
                 print(f"[Screen] Set pixel ({x}, {y}) = {val}/255", flush=True)
             else:
-                print("Usage: atrios-light screen pixel <x> <y> [brightness]", flush=True)
+                print("Usage: atrios screen pixel <x> <y> [brightness]", flush=True)
         elif act == "gradient":
             buf = bytearray(SCR_SIZE)
             for y in range(SCR_H):
@@ -373,16 +373,16 @@ def main():
         print(f"  * Front Matrix: Gowin 25x16 ({FB_SCREEN}, 1200B RGB888)", flush=True)
         print(f"  * Top RGB Ring: 24 Channels ({FB_RING}, 72B RGB)", flush=True)
         print("\nCommands:")
-        print("  atrios-light screen clock           - Display current time")
-        print("  atrios-light screen eyes [state]    - Alice eyes (open/blink/wink/left/right/happy/animate)")
-        print("  atrios-light screen ticker \"TEXT\"  - Scrolling marquee")
-        print("  atrios-light screen pixel X Y [B]   - Individual LED control (0..255)")
-        print("  atrios-light screen off             - Turn off screen")
-        print("  atrios-light ring rainbow           - Rainbow animation")
-        print("  atrios-light ring volume 70         - Volume arc at 70%")
-        print("  atrios-light ring red               - Mic Mute solid red")
-        print("  atrios-light ring off               - Turn off ring")
-        print("  atrios-light sensor                 - Read live lux level")
+        print("  atrios screen clock           - Display current time")
+        print("  atrios screen eyes [state]    - Alice eyes (open/blink/wink/left/right/happy/animate)")
+        print("  atrios screen ticker \"TEXT\"  - Scrolling marquee")
+        print("  atrios screen pixel X Y [B]   - Individual LED control (0..255)")
+        print("  atrios screen off             - Turn off screen")
+        print("  atrios ring rainbow           - Rainbow animation")
+        print("  atrios ring volume 70         - Volume arc at 70%")
+        print("  atrios ring red               - Mic Mute solid red")
+        print("  atrios ring off               - Turn off ring")
+        print("  atrios sensor                 - Read live lux level")
         print("==========================================================", flush=True)
 
 if __name__ == "__main__":

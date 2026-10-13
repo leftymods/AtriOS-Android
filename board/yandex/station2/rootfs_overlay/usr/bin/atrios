@@ -1,0 +1,48 @@
+#!/bin/sh
+# atrios - single entry point for all AtriOS hardware tools
+L=/usr/lib/atrios
+
+usage() {
+cat <<'EOT'
+AtriOS - Yandex Station Max tools
+
+  atrios status                      Wi-Fi / Bluetooth / Zigbee overview
+  atrios test                        Speakers + microphone array test
+
+  Screen (25x16):
+    atrios screen clock|smile|happy|eyes [state]|ticker "TEXT"
+    atrios screen fill [0..255] | pixel X Y [B] | gradient | off
+  LED ring (24 RGB):
+    atrios ring rainbow|volume N|off
+  Light sensor:
+    atrios sensor
+
+  Audio:
+    atrios volume [0..100%]    atrios mute [on|off]
+    atrios play [file.wav]     atrios record [sec] [file.wav]
+    atrios amps
+
+  Wireless:
+    atrios wifi [scan|connect SSID PASS|power 1|0]
+    atrios bt [init|scan]
+    atrios zigbee [reset|ping]
+
+  Buttons / knob monitor:
+    atrios input
+EOT
+}
+
+c="$1"
+[ $# -gt 0 ] && shift
+case "$c" in
+  screen|ring|sensor) exec $L/light "$c" "$@" ;;
+  light)              exec $L/light "$@" ;;
+  test|play|record|volume|mute|amps) exec $L/audio "$c" "$@" ;;
+  audio)              exec $L/audio "$@" ;;
+  wifi|bt|bluetooth|zigbee) exec $L/wireless "$c" "$@" ;;
+  wireless)           exec $L/wireless "$@" ;;
+  status)             exec $L/wireless status ;;
+  input|buttons)      exec $L/input "$@" ;;
+  ""|help|-h|--help)  usage ;;
+  *) echo "atrios: unknown command '$c'"; echo; usage; exit 1 ;;
+esac

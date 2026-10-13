@@ -59,18 +59,26 @@
 
 ---
 
-## Built-in CLI Tooling & Daemons
+## Built-in CLI: единая команда `atrios`
 
-В состав rootfs включены объединенные модульные утилиты и сервисы в `/usr/bin/`:
+Все утилиты объединены в одну команду `/usr/bin/atrios` (внутренние модули лежат в `/usr/lib/atrios/`, отдельных `atrios-*` в PATH больше нет). Без аргументов `atrios` печатает список команд.
 
-| Unified Tool | Subsystems Covered | Example Commands |
-|---|---|---|
-| **`atrios-light`** | Монохромный экран 25x16 (Gowin FPGA), RGB-кольцо (IS31FL3236A) и датчик света (LTR-308ALS) | `atrios-light screen clock`<br>`atrios-light screen eyes open`<br>`atrios-light ring rainbow`<br>`atrios-light ring red`<br>`atrios-light sensor` |
-| **`atrios-audio`** | Динамики, усилители Silergy SY6045S, 8-канальный массив микрофонов ES7210, громкость и софтовый мут | `atrios-audio test`<br>`atrios-audio play /path/file.wav`<br>`atrios-audio record 3 /tmp/rec.wav`<br>`atrios-audio volume 80%`<br>`atrios-audio mute on` |
-| **`atrios-wireless`** | Wi-Fi (Realtek RTL8822CS SDIO), Bluetooth (UART `/dev/ttyS1`), Zigbee (EFR32 `/dev/ttyAML4`) | `atrios-wireless status`<br>`atrios-wireless wifi scan`<br>`atrios-wireless wifi connect "SSID" "Pass"`<br>`atrios-wireless bt status`<br>`atrios-wireless zigbee reset` |
-| **`atrios-input`** | Мониторинг кнопок Алисы, Mic Mute, крутилки громкости и пультов в реальном времени | `atrios-input` |
-| `atrios-screend` | Фоновый демон часов (HH:MM) на экране 25x16 | `atrios-screend &` |
-| `atrios-rotaryd` | Фоновый демон громкости на кольце и переключения мута микрофонов | `atrios-rotaryd &` |
+| Команда | Что делает |
+|---|---|
+| `atrios status` | Обзор Wi-Fi / Bluetooth / Zigbee |
+| `atrios test` | Тест динамиков и 8-канального массива микрофонов |
+| `atrios screen clock \| smile \| happy \| eyes [state] \| ticker "TEXT" \| fill [0..255] \| pixel X Y [B] \| gradient \| off` | Монохромный экран 25x16 |
+| `atrios ring rainbow \| volume N \| off` | RGB-кольцо (24 светодиода) |
+| `atrios sensor` | Датчик освещённости (люксы) |
+| `atrios volume [0..100%]`, `atrios mute [on\|off]`, `atrios play [file]`, `atrios record [sec] [file]`, `atrios amps` | Звук и усилители SY6045S |
+| `atrios wifi [scan \| connect SSID PASS \| power 1\|0]` | Wi-Fi |
+| `atrios bt [init \| scan]` | Bluetooth |
+| `atrios zigbee [reset \| ping]` | Zigbee (EFR32) |
+| `atrios input` | Монитор кнопок, крутилки и пульта |
+
+Фоновые демоны запускаются из `/etc/init.d/S60atrios`: часы на экране (`/usr/lib/atrios/screend`) и громкость/мут (`/usr/lib/atrios/rotaryd`). Мут микрофона кольцом не подсвечивается.
+
+Оболочка: `sh` остаётся login-shell, а `~/.profile` запускает fish только если он реально стартует (иначе остаётся `sh`). Настройки fish: `/etc/fish/config.fish`.
 
 ---
 
@@ -78,58 +86,14 @@
 
 Подключаемся к UART-консоли (`ttyS0`, 115200 8N1):
 
-### 1. Проверка загруженных модулей ядра:
 ```bash
-lsmod
-```
-В списке присутствуют: `quasar_led_ring`, `quasar_led_screen`, `rotary-volume`, `ltr308als01`, `snd-soc-sy6045s`, `snd-soc-es7210`, `88x2es`, `gowin_led_device`.
-
-### 2. Кнопки и энкодер:
-```bash
-atrios-test-buttons
-```
-- Кнопка 1 (Алиса): код `KEY_VOICECOMMAND` (582) / `KEY_POWER` (116).
-- Кнопка 2 (Mic Mute): код `KEY_MICMUTE` (248), срабатывание софтового мута и красного кольца.
-- Крутилка: шаги громкости `KEY_PAGEUP` / `KEY_PAGEDOWN`.
-
-### 3. Верхнее RGB-кольцо:
-```bash
-atrios-test-ring rainbow          # бегущая радуга
-atrios-test-ring volume 70        # индикатор громкости на 70%
-atrios-test-ring fill 255 0 0     # красный цвет
-atrios-test-ring off              # выключить
-```
-
-### 4. Монохромный экран 25x16 (Gowin FPGA, 1200 байт RGB888, яркость 0..255):
-```bash
-atrios-test-screen clock          # текущее время (HH:MM)
-atrios-test-screen ticker "HELLO" # плавная бегущая строка с полным шрифтом
-atrios-test-screen eyes           # анимированные глаза Алисы
-atrios-test-screen smile          # улыбающееся лицо
-atrios-test-screen gradient       # 2D градиент яркости (0..255)
-atrios-test-screen fill 120       # равномерная заливка с заданной яркостью
-atrios-test-screen pixel 12 8 255 # установка одного пикселя (x, y, brightness)
-atrios-test-screen test           # полный демонстрационный тест экрана
-atrios-test-screen off            # выключить экран
-```
-
-### 5. Датчик освещенности:
-```bash
-atrios-test-sensor
-```
-Выводит показания в люксах. При закрытии рукой значения падают.
-
-### 6. Звук и усилители SY6045S:
-```bash
-atrios-test-audio
-```
-Проверяет привязку усилителей `2-002a` и `2-002b`, воспроизводит проверочный тон 48 кГц через `asound.conf` plug и записывает 3 сек аудио.
-
-### 7. Wi-Fi (RTL8822CS/ES):
-```bash
-atrios-test-wifi
-# Или подключение к сети:
-atrios-test-wifi "MySSID" "Password123"
+lsmod                      # модули ядра
+atrios input               # кнопки и энкодер
+atrios ring rainbow        # кольцо
+atrios screen ticker HELLO # экран
+atrios sensor              # датчик света
+atrios test                # звук и микрофоны
+atrios status              # Wi-Fi / BT / Zigbee
 ```
 
 ---
@@ -145,7 +109,7 @@ AtriOS-Android/
 │   │   ├── etc/                  # asound.conf, init-скрипты, wpa_supplicant.conf
 │   │   ├── lib/firmware/         # Прошивки Gowin FPGA, SY6045S, Realtek Wi-Fi
 │   │   ├── lib/modules/4.9.113/  # Модули ядра кольца, экрана, звука, сенсора
-│   │   └── usr/bin/              # Утилиты и демоны atrios-*
+│   │   └── usr/bin/              # Команда atrios (usr/bin) и модули (usr/lib/atrios)
 │   └── station2_defconfig        # Конфиг Buildroot под Станцию Макс (S905X3)
 ├── common/                       # Ядро 4.9.113 и дерево устройств (DTS)
 ├── tools/

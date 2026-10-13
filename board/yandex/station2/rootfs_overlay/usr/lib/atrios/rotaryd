@@ -3,7 +3,7 @@
 AtriOS Hardware Interaction Daemon (atrios-rotaryd)
 Handles:
   - Rotary Knob: Volume up/down with animated LED ring arc feedback
-  - Top Button #2 (KEY_MICMUTE [248]): Software Microphone Mute toggle + Red LED ring
+  - Top Button #2 (KEY_MICMUTE [248]): Software Microphone Mute toggle
   - Top Button #1 (KEY_VOICECOMMAND [582] / KEY_POWER [116]): Alice/Assistant call, Play/Pause
 """
 
@@ -36,13 +36,10 @@ def set_ring_frame(frame):
         pass
 
 def show_mute_ring():
-    # Solid red ring indicates mics are software-muted
-    set_ring_frame(bytes([255, 0, 0]) * NUM_LEDS)
+    # No ring indication for mic mute
+    set_ring_frame(b"\x00" * (NUM_LEDS * 3))
 
 def show_volume_ring(vol_pct):
-    if mic_muted:
-        show_mute_ring()
-        return
     active = int(round(NUM_LEDS * (vol_pct / 100.0)))
     frame = bytearray(NUM_LEDS * 3)
     for i in range(NUM_LEDS):
