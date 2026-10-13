@@ -6,18 +6,18 @@ case "$1" in
     echo "[AtriOS] Initializing audio amplifiers..."
     sleep 1
 
-    # Silergy SY6045S setup on I2C bus 2
+    # Silergy SY6045S setup on I2C bus 2: write filename to settings_file sysfs attribute
     if [ -d "/sys/bus/i2c/drivers/sy6045s/2-002b" ]; then
       echo "[AtriOS] SY6045S Woofer (2-002b) detected. Applying settings..."
       if [ -f /lib/firmware/sy6045s-woofer-settings.txt ]; then
-        cat /lib/firmware/sy6045s-woofer-settings.txt > /sys/bus/i2c/drivers/sy6045s/2-002b/settings_file 2>/dev/null || true
+        echo "sy6045s-woofer-settings.txt" > /sys/bus/i2c/drivers/sy6045s/2-002b/settings_file 2>/dev/null || true
       fi
     fi
 
     if [ -d "/sys/bus/i2c/drivers/sy6045s/2-002a" ]; then
       echo "[AtriOS] SY6045S Tweeters (2-002a) detected. Applying settings..."
       if [ -f /lib/firmware/sy6045s-tweeters-settings.txt ]; then
-        cat /lib/firmware/sy6045s-tweeters-settings.txt > /sys/bus/i2c/drivers/sy6045s/2-002a/settings_file 2>/dev/null || true
+        echo "sy6045s-tweeters-settings.txt" > /sys/bus/i2c/drivers/sy6045s/2-002a/settings_file 2>/dev/null || true
       fi
     fi
 
@@ -26,9 +26,12 @@ case "$1" in
       echo "[AtriOS] TAS5825M detected on I2C bus 2."
     fi
 
-    # Unmute ALSA playback mixer channels
+    # Unmute ALSA playback mixer channels and amplifier volume
     if command -v amixer >/dev/null 2>&1; then
-      amixer -c 0 sset 'Master' 80% unmute 2>/dev/null || true
+      amixer -c 0 sset 'Master Playback' 85% unmute 2>/dev/null || true
+      amixer -c 0 sset 'Master' 85% unmute 2>/dev/null || true
+      amixer -c 0 sset 'Ch1 Playback' 100% unmute 2>/dev/null || true
+      amixer -c 0 sset 'Ch2 Playback' 100% unmute 2>/dev/null || true
       amixer -c 0 sset 'DAC' 100% unmute 2>/dev/null || true
       amixer -c 0 sset 'TDM-B' unmute 2>/dev/null || true
     fi

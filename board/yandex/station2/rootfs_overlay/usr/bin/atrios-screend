@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""
+AtriOS Background Screen Clock Daemon (atrios-screend)
+Updates the front Gowin 25x16 monochrome matrix with current time (HH:MM).
+"""
+
 import sys
 import os
 import time
@@ -6,7 +11,7 @@ import time
 FB_SCREEN = "/dev/fb4"
 WIDTH = 25
 HEIGHT = 16
-BPP = 3
+BPP = 1
 FRAME_SIZE = WIDTH * HEIGHT * BPP
 
 FONT = {
@@ -23,35 +28,35 @@ FONT = {
     ':': [0b00000, 0b00100, 0b00100, 0b00000, 0b00100, 0b00100, 0b00000],
 }
 
-def set_pixel(buf, x, y, r, g, b):
+def set_pixel(buf, x, y, brightness):
     if 0 <= x < WIDTH and 0 <= y < HEIGHT:
-        idx = (y * WIDTH + x) * BPP
-        buf[idx + 0] = int(r)
-        buf[idx + 1] = int(g)
-        buf[idx + 2] = int(b)
+        buf[y * WIDTH + x] = max(0, min(255, int(brightness)))
 
 def send_frame(buf):
     try:
         with open(FB_SCREEN, "wb") as f:
-            f.write(buf)
+            f.write(buf[:FRAME_SIZE])
             f.flush()
     except Exception:
         pass
 
 def main():
+    last_rendered = ""
     while True:
         now = time.strftime("%H:%M")
-        buf = bytearray(FRAME_SIZE)
-        x_positions = [1, 7, 12, 14, 20]
-        for char, x_start in zip(now, x_positions):
-            glyph = FONT.get(char, [0]*7)
-            for row_idx, row_bits in enumerate(glyph):
-                y = 4 + row_idx
-                for col_idx in range(5):
-                    if (row_bits >> (4 - col_idx)) & 1:
-                        set_pixel(buf, x_start + col_idx, y, 220, 220, 240)
-        send_frame(buf)
-        time.sleep(15)
+        if now != last_rendered:
+            buf = bytearray(FRAME_SIZE)
+            x_positions = [1, 7, 12, 14, 20]
+            for char, x_start in zip(now, x_positions):
+                glyph = FONT.get(char, [0]*7)
+                for row_idx, row_bits in enumerate(glyph):
+                    y = 4 + row_idx
+                    for col_idx in range(5):
+                        if (row_bits >> (4 - col_idx)) & 1:
+                            set_pixel(buf, x_start + col_idx, y, 200)
+            send_frame(buf)
+            last_rendered = now
+        time.sleep(10)
 
 if __name__ == "__main__":
     main()

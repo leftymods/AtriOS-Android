@@ -71,8 +71,9 @@ fi
 echo "[6/6] Packaging and signing AtriOS firmware image..."
 cd "$TOOLS_DIR"
 rm -f .fw_builder_cache.json
-python3 fw_builder.py build --version-num 100
+VERSION_NUM="${1:-105}"
+python3 fw_builder.py build --version-num "$VERSION_NUM"
 echo "=========================================================="
 echo "SUCCESS: AtriOS Linux Firmware build complete!"
-echo "Image location: $TOOLS_DIR/yandex_s905x3_custom_v100.img"
+echo "Image location: $TOOLS_DIR/yandex_s905x3_custom_v${VERSION_NUM}.img"
 echo "=========================================================="

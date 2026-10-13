@@ -25,7 +25,14 @@ case "$1" in
     modprobe leds-is31fl32xx 2>/dev/null || insmod /lib/modules/4.9.113/leds-is31fl32xx.ko 2>/dev/null
     modprobe quasar_led_ring 2>/dev/null || insmod /lib/modules/4.9.113/quasar_led_ring.ko 2>/dev/null
 
-    # 4. Wireless (Realtek RTL8822CS/ES)
+    # 4. Wireless (Realtek RTL8822CS/ES) - Power up SDIO bus before driver attachment
+    if [ -x /usr/bin/atrios-wifi-power ]; then
+      /usr/bin/atrios-wifi-power 1 2>/dev/null || true
+    elif [ -c /dev/wifi_power ]; then
+      python3 -c "import fcntl; f = open('/dev/wifi_power', 'wb'); fcntl.ioctl(f.fileno(), 0x6d03); f.close()" 2>/dev/null || true
+    fi
+    usleep 200000 2>/dev/null || sleep 1
+
     modprobe 88x2es 2>/dev/null || insmod /lib/modules/4.9.113/88x2es.ko 2>/dev/null
     modprobe zigbee_control 2>/dev/null || insmod /lib/modules/4.9.113/zigbee_control.ko 2>/dev/null
 

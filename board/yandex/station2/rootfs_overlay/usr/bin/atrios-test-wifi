@@ -5,7 +5,18 @@ echo "=============================================="
 echo "    AtriOS Realtek 8822CS/ES Wi-Fi Diagnostic  "
 echo "=============================================="
 
-# 1. Check driver module
+# 1. Power up SDIO bus if wlan0 is not yet present
+if ! ip link show wlan0 >/dev/null 2>&1; then
+  echo "[...] Powering up Wi-Fi SDIO controller..."
+  if [ -x /usr/bin/atrios-wifi-power ]; then
+    /usr/bin/atrios-wifi-power 1 2>/dev/null || true
+  elif [ -c /dev/wifi_power ]; then
+    python3 -c "import fcntl; f = open('/dev/wifi_power', 'wb'); fcntl.ioctl(f.fileno(), 0x6d03); f.close()" 2>/dev/null || true
+  fi
+  sleep 1
+fi
+
+# 2. Check driver module
 if lsmod | grep -q "88x2es"; then
   echo "[OK] Driver module 88x2es is LOADED."
 else
@@ -14,17 +25,25 @@ else
   sleep 1
 fi
 
-# 2. Check interface wlan0
+# 3. Check interface wlan0
+if ! ip link show wlan0 >/dev/null 2>&1; then
+  echo "[!] Interface wlan0 not found yet. Re-scanning SDIO bus..."
+  if [ -x /usr/bin/atrios-wifi-power ]; then
+    /usr/bin/atrios-wifi-power 1 2>/dev/null || true
+    sleep 1
+  fi
+fi
+
 if ip link show wlan0 >/dev/null 2>&1; then
   echo "[OK] Network interface wlan0 exists."
   ip link set wlan0 up
 else
-  echo "[ERROR] Interface wlan0 NOT found! Check dmesg for SDIO errors."
-  dmesg | grep -i -E "sdio|8822|wlan" | tail -n 10
+  echo "[ERROR] Interface wlan0 NOT found! Check dmesg for SDIO errors:"
+  dmesg | grep -i -E "sdio|8822|wlan|wifi" | tail -n 12
   exit 1
 fi
 
-# 3. Scan for wireless networks
+# 4. Scan for wireless networks
 echo "[...] Scanning for available Wi-Fi access points..."
 if command -v iw >/dev/null 2>&1; then
   iw dev wlan0 scan 2>/dev/null | grep -E "SSID:|signal:" | head -n 30

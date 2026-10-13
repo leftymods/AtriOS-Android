@@ -1,17 +1,27 @@
 #!/usr/bin/env python3
+"""
+AtriOS Front Gowin 25x16 Monochrome LED Matrix Diagnostic & Animation Utility
+Hardware:
+  - Controller: Gowin FPGA over SPI (/dev/fb4)
+  - Display: 25 columns x 16 rows monochrome white LED matrix
+  - Pixel Format: 8-bit grayscale (1 byte per LED, range 0..255 for individual brightness)
+  - Frame buffer size: exactly 400 bytes (25 * 16 * 1)
+"""
+
 import sys
-import time
 import os
+import time
 import argparse
 
 FB_DEV = "/dev/fb4"
 WIDTH = 25
 HEIGHT = 16
-BPP = 3
+BPP = 1
 FRAME_SIZE = WIDTH * HEIGHT * BPP
 
-# Simple 5x7 bitmap digits (0-9 and colon)
+# 5x7 ASCII bitmap font (width=5, height=7)
 FONT = {
+    ' ': [0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000],
     '0': [0b01110, 0b10001, 0b10011, 0b10101, 0b11001, 0b10001, 0b01110],
     '1': [0b00100, 0b01100, 0b00100, 0b00100, 0b00100, 0b00100, 0b01110],
     '2': [0b01110, 0b10001, 0b00001, 0b00110, 0b01000, 0b10000, 0b11111],
@@ -23,19 +33,56 @@ FONT = {
     '8': [0b01110, 0b10001, 0b10001, 0b01110, 0b10001, 0b10001, 0b01110],
     '9': [0b01110, 0b10001, 0b10001, 0b01111, 0b00001, 0b00001, 0b01110],
     ':': [0b00000, 0b00100, 0b00100, 0b00000, 0b00100, 0b00100, 0b00000],
+    '-': [0b00000, 0b00000, 0b00000, 0b11111, 0b00000, 0b00000, 0b00000],
+    '.': [0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b01100, 0b01100],
+    '!': [0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00000, 0b00100],
+    '?': [0b01110, 0b10001, 0b00001, 0b00010, 0b00100, 0b00000, 0b00100],
+    'A': [0b01110, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001],
+    'B': [0b11110, 0b10001, 0b10001, 0b11110, 0b10001, 0b10001, 0b11110],
+    'C': [0b01110, 0b10001, 0b10000, 0b10000, 0b10000, 0b10001, 0b01110],
+    'D': [0b11100, 0b10010, 0b10001, 0b10001, 0b10001, 0b10010, 0b11100],
+    'E': [0b11111, 0b10000, 0b10000, 0b11110, 0b10000, 0b10000, 0b11111],
+    'F': [0b11111, 0b10000, 0b10000, 0b11110, 0b10000, 0b10000, 0b10000],
+    'G': [0b01110, 0b10001, 0b10000, 0b10111, 0b10001, 0b10001, 0b01110],
+    'H': [0b10001, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001],
+    'I': [0b01110, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b01110],
+    'J': [0b00001, 0b00001, 0b00001, 0b00001, 0b10001, 0b10001, 0b01110],
+    'K': [0b10001, 0b10010, 0b10100, 0b11000, 0b10100, 0b10010, 0b10001],
+    'L': [0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b11111],
+    'M': [0b10001, 0b11011, 0b10101, 0b10101, 0b10001, 0b10001, 0b10001],
+    'N': [0b10001, 0b11001, 0b10101, 0b10011, 0b10001, 0b10001, 0b10001],
+    'O': [0b01110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110],
+    'P': [0b11110, 0b10001, 0b10001, 0b11110, 0b10000, 0b10000, 0b10000],
+    'Q': [0b01110, 0b10001, 0b10001, 0b10001, 0b10101, 0b10010, 0b01101],
+    'R': [0b11110, 0b10001, 0b10001, 0b11110, 0b10100, 0b10010, 0b10001],
+    'S': [0b01111, 0b10000, 0b10000, 0b01110, 0b00001, 0b00001, 0b11110],
+    'T': [0b11111, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100],
+    'U': [0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110],
+    'V': [0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01010, 0b00100],
+    'W': [0b10001, 0b10001, 0b10001, 0b10101, 0b10101, 0b11011, 0b10001],
+    'X': [0b10001, 0b10001, 0b01010, 0b00100, 0b01010, 0b10001, 0b10001],
+    'Y': [0b10001, 0b10001, 0b01010, 0b00100, 0b00100, 0b00100, 0b00100],
+    'Z': [0b11111, 0b00001, 0b00010, 0b00100, 0b01000, 0b10000, 0b11111],
 }
 
-def set_pixel(buf, x, y, r, g, b):
+def set_pixel(buf, x, y, brightness):
+    """Set single LED pixel brightness (0..255)."""
     if 0 <= x < WIDTH and 0 <= y < HEIGHT:
-        idx = (y * WIDTH + x) * BPP
-        buf[idx + 0] = int(r)
-        buf[idx + 1] = int(g)
-        buf[idx + 2] = int(b)
+        val = max(0, min(255, int(brightness)))
+        buf[y * WIDTH + x] = val
+
+def get_pixel(buf, x, y):
+    if 0 <= x < WIDTH and 0 <= y < HEIGHT:
+        return buf[y * WIDTH + x]
+    return 0
 
 def send_frame(buf):
+    """Write exact 400-byte frame to Gowin framebuffer."""
+    if len(buf) != FRAME_SIZE:
+        print(f"[!] Warning: frame length is {len(buf)}, expected {FRAME_SIZE}")
     try:
         with open(FB_DEV, "wb") as f:
-            f.write(buf)
+            f.write(buf[:FRAME_SIZE])
             f.flush()
         return True
     except Exception as e:
@@ -45,19 +92,15 @@ def send_frame(buf):
 def clear_screen():
     send_frame(bytearray(FRAME_SIZE))
 
-def fill_color(r, g, b):
-    buf = bytearray(FRAME_SIZE)
-    for i in range(WIDTH * HEIGHT):
-        buf[i * 3 + 0] = int(r)
-        buf[i * 3 + 1] = int(g)
-        buf[i * 3 + 2] = int(b)
-    send_frame(buf)
+def fill_screen(brightness=200):
+    val = max(0, min(255, int(brightness)))
+    send_frame(bytearray([val] * FRAME_SIZE))
 
-def draw_clock():
+def draw_clock(brightness=220):
     now = time.strftime("%H:%M")
     buf = bytearray(FRAME_SIZE)
-    # Positions for 4 digits (5x7) + colon (3x7) centered on 25x16
-    # 4 digits * 5 = 20, + colon (2) = 22 width. Offsets: x=1, 7, 12, 14, 20. y=4
+    # 4 digits (5x7) + colon (3x7 centered).
+    # Layout across 25 columns: x = 1, 7, 12, 14, 20. y = 4 (centered on 16 rows)
     x_positions = [1, 7, 12, 14, 20]
     for char, x_start in zip(now, x_positions):
         glyph = FONT.get(char, [0]*7)
@@ -65,74 +108,302 @@ def draw_clock():
             y = 4 + row_idx
             for col_idx in range(5):
                 if (row_bits >> (4 - col_idx)) & 1:
-                    set_pixel(buf, x_start + col_idx, y, 255, 255, 255)
+                    set_pixel(buf, x_start + col_idx, y, brightness)
     send_frame(buf)
-    print(f"[Screen Test] Displayed clock: {now}")
+    print(f"[Screen] Clock displayed: {now} (brightness={brightness}/255)")
 
-def draw_eyes(blink=False):
+def draw_eyes(state="open", brightness=220):
+    """
+    Cute animated Alice/robot eyes on 25x16 matrix:
+      - 'open': Full expressive oval eyes
+      - 'blink': Horizontal slit
+      - 'left': Eyes shifted left
+      - 'right': Eyes shifted right
+      - 'wink': Left open, right slit
+      - 'happy': Curved cheerful arches
+    """
     buf = bytearray(FRAME_SIZE)
-    # Draw cute animated Alice eyes
-    # Left eye: x: 4..8, y: 4..10
-    # Right eye: x: 16..20, y: 4..10
-    if not blink:
+    dim = int(brightness * 0.4)
+
+    if state == "open":
+        # Left eye: x: 3..8, y: 3..10
         for y in range(4, 11):
             for x in range(4, 9):
-                set_pixel(buf, x, y, 180, 0, 255) # Purple eyes
+                set_pixel(buf, x, y, brightness)
+        # Soft pupil highlight
+        set_pixel(buf, 5, 5, 255)
+        set_pixel(buf, 4, 4, dim)
+
+        # Right eye: x: 16..21, y: 3..10
+        for y in range(4, 11):
             for x in range(16, 21):
-                set_pixel(buf, x, y, 180, 0, 255)
-    else:
-        # Blink slit: y=7
-        for x in range(4, 9):
-            set_pixel(buf, x, 7, 180, 0, 255)
-        for x in range(16, 21):
-            set_pixel(buf, x, 7, 180, 0, 255)
+                set_pixel(buf, x, y, brightness)
+        set_pixel(buf, 17, 5, 255)
+        set_pixel(buf, 16, 4, dim)
+
+    elif state == "blink":
+        for x in range(3, 10):
+            set_pixel(buf, x, 7, brightness)
+        for x in range(15, 22):
+            set_pixel(buf, x, 7, brightness)
+
+    elif state == "left":
+        for y in range(4, 11):
+            for x in range(2, 7):
+                set_pixel(buf, x, y, brightness)
+            for x in range(14, 19):
+                set_pixel(buf, x, y, brightness)
+
+    elif state == "right":
+        for y in range(4, 11):
+            for x in range(6, 11):
+                set_pixel(buf, x, y, brightness)
+            for x in range(18, 23):
+                set_pixel(buf, x, y, brightness)
+
+    elif state == "wink":
+        # Left open
+        for y in range(4, 11):
+            for x in range(4, 9):
+                set_pixel(buf, x, y, brightness)
+        # Right wink slit
+        for x in range(15, 22):
+            set_pixel(buf, x, 7, brightness)
+
+    elif state == "happy":
+        # Cheerful inverted U arches ^ ^
+        left_pts = [(4,7), (5,6), (6,5), (7,6), (8,7), (3,8), (9,8)]
+        right_pts = [(16,7), (17,6), (18,5), (19,6), (20,7), (15,8), (21,8)]
+        for x, y in left_pts + right_pts:
+            set_pixel(buf, x, y, brightness)
+            set_pixel(buf, x, y - 1, dim)
+
     send_frame(buf)
 
+def draw_smile(brightness=220):
+    """Draw Alice face with cute eyes, cheeks, and smiling mouth."""
+    buf = bytearray(FRAME_SIZE)
+    # Eyes (^ ^)
+    for x, y in [(4,5), (5,4), (6,4), (7,5), (17,5), (18,4), (19,4), (20,5)]:
+        set_pixel(buf, x, y, brightness)
+
+    # Glowing cheeks (softer brightness)
+    cheek_val = max(10, int(brightness * 0.35))
+    for x, y in [(3,8), (4,8), (19,8), (20,8)]:
+        set_pixel(buf, x, y, cheek_val)
+
+    # Smile mouth: (9,11), (10,12), (11,13), (12,13), (13,13), (14,12), (15,11)
+    for x, y in [(9,11), (10,12), (11,13), (12,13), (13,13), (14,12), (15,11)]:
+        set_pixel(buf, x, y, brightness)
+
+    send_frame(buf)
+    print(f"[Screen] Displayed Alice smile face (brightness={brightness})")
+
+def animate_eyes(cycles=3, brightness=220):
+    print(f"[Screen] Animating Alice eyes ({cycles} cycles)...")
+    for _ in range(cycles):
+        draw_eyes("open", brightness)
+        time.sleep(1.2)
+        draw_eyes("blink", brightness)
+        time.sleep(0.12)
+        draw_eyes("open", brightness)
+        time.sleep(0.8)
+        draw_eyes("left", brightness)
+        time.sleep(0.6)
+        draw_eyes("right", brightness)
+        time.sleep(0.6)
+        draw_eyes("open", brightness)
+        time.sleep(0.8)
+        draw_eyes("wink", brightness)
+        time.sleep(0.5)
+        draw_eyes("happy", brightness)
+        time.sleep(0.9)
+    draw_eyes("open", brightness)
+
+def draw_gradient():
+    """Display per-pixel brightness gradient showcasing 256 grayscale levels."""
+    buf = bytearray(FRAME_SIZE)
+    for y in range(HEIGHT):
+        for x in range(WIDTH):
+            # Gradient horizontally and vertically: 0 to 255
+            val = int(255 * (x / (WIDTH - 1)) * (0.3 + 0.7 * (y / (HEIGHT - 1))))
+            set_pixel(buf, x, y, val)
+    send_frame(buf)
+    print("[Screen] Displayed 2D per-pixel brightness gradient (0..255).")
+
+def scroll_ticker(text, speed=0.06, brightness=220):
+    """
+    Smooth horizontal text scrolling (ticker) across 25x16 matrix.
+    Translates characters into 5x7 columns and shifts by 1 pixel per step.
+    """
+    text = text.upper()
+    # Build complete horizontal bit columns for the text
+    columns = []
+    # Add leading space (25 blank columns to scroll in from right)
+    for _ in range(WIDTH):
+        columns.append([0] * 7)
+
+    for char in text:
+        glyph = FONT.get(char, FONT.get(' ', [0]*7))
+        # Each glyph has 5 columns
+        for c in range(5):
+            col_bits = []
+            for r in range(7):
+                bit = (glyph[r] >> (4 - c)) & 1
+                col_bits.append(bit)
+            columns.append(col_bits)
+        # 1 column inter-character space
+        columns.append([0] * 7)
+
+    # Trailing blank columns to scroll out
+    for _ in range(WIDTH):
+        columns.append([0] * 7)
+
+    total_cols = len(columns)
+    print(f"[Screen] Scrolling ticker: '{text}' ({total_cols} column frames)...")
+
+    # Scroll through columns
+    for start_col in range(total_cols - WIDTH + 1):
+        buf = bytearray(FRAME_SIZE)
+        for x in range(WIDTH):
+            col_data = columns[start_col + x]
+            for row_idx, bit in enumerate(col_data):
+                y = 4 + row_idx  # Center 7-pixel font vertically in 16 rows
+                if bit:
+                    set_pixel(buf, x, y, brightness)
+        send_frame(buf)
+        time.sleep(speed)
+
+    clear_screen()
+    print("[Screen] Ticker scroll finished.")
+
+def run_hardware_test():
+    """Complete diagnostic test sequence for Station Max Gowin 25x16 matrix."""
+    print("==========================================================")
+    print("      AtriOS Gowin 25x16 LED Matrix Diagnostic Test       ")
+    print("==========================================================")
+    print("1. Testing full clear...")
+    clear_screen()
+    time.sleep(0.4)
+
+    print("2. Testing individual per-pixel brightness ramp (0 -> 255)...")
+    for b in [15, 40, 80, 140, 200, 255]:
+        fill_screen(b)
+        time.sleep(0.3)
+
+    print("3. Testing 2D brightness gradient...")
+    draw_gradient()
+    time.sleep(1.5)
+
+    print("4. Testing Alice facial expressions...")
+    draw_smile(220)
+    time.sleep(1.5)
+    animate_eyes(cycles=1, brightness=220)
+    time.sleep(1.0)
+
+    print("5. Testing digital clock display...")
+    draw_clock(220)
+    time.sleep(2.0)
+
+    print("6. Testing smooth scrolling text ticker...")
+    scroll_ticker("ATRIOS S905X3 OK", speed=0.05, brightness=220)
+
+    print("7. Restoring digital clock...")
+    draw_clock(200)
+    print("[Screen] Diagnostic test sequence COMPLETE!")
+
 def main():
-    parser = argparse.ArgumentParser(description="AtriOS Front Gowin 25x16 LED Matrix Diagnostic Utility")
-    parser.add_argument("--color", nargs=3, type=int, metavar=("R", "G", "B"), help="Fill screen with solid RGB")
+    # Support positional command syntax as primary
+    positional_cmd = None
+    if len(sys.argv) > 1 and not sys.argv[1].startswith("-"):
+        positional_cmd = sys.argv[1].lower()
+
+    if positional_cmd in ("clock", "time"):
+        b = int(sys.argv[2]) if len(sys.argv) > 2 and sys.argv[2].isdigit() else 220
+        draw_clock(b)
+        return
+
+    if positional_cmd in ("ticker", "scroll", "text"):
+        msg = sys.argv[2] if len(sys.argv) > 2 else "ATRIOS LINUX"
+        spd = float(sys.argv[3]) if len(sys.argv) > 3 else 0.06
+        b = int(sys.argv[4]) if len(sys.argv) > 4 and sys.argv[4].isdigit() else 220
+        scroll_ticker(msg, spd, b)
+        return
+
+    if positional_cmd in ("eyes", "alice"):
+        animate_eyes(cycles=3, brightness=220)
+        return
+
+    if positional_cmd == "smile":
+        b = int(sys.argv[2]) if len(sys.argv) > 2 and sys.argv[2].isdigit() else 220
+        draw_smile(b)
+        return
+
+    if positional_cmd in ("fill", "brightness"):
+        val = int(sys.argv[2]) if len(sys.argv) > 2 and sys.argv[2].isdigit() else 200
+        fill_screen(val)
+        print(f"[Screen] Screen filled with brightness = {val}/255")
+        return
+
+    if positional_cmd == "gradient":
+        draw_gradient()
+        return
+
+    if positional_cmd in ("off", "clear"):
+        clear_screen()
+        print("[Screen] Screen turned off.")
+        return
+
+    if positional_cmd == "pixel":
+        if len(sys.argv) >= 5:
+            x, y, val = int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])
+            buf = bytearray(FRAME_SIZE)
+            set_pixel(buf, x, y, val)
+            send_frame(buf)
+            print(f"[Screen] Pixel ({x}, {y}) set to brightness {val}/255")
+        else:
+            print("Usage: atrios-test-screen pixel <x 0..24> <y 0..15> <brightness 0..255>")
+        return
+
+    if positional_cmd in ("test", "demo"):
+        run_hardware_test()
+        return
+
+    # Standard ArgumentParser for flags
+    parser = argparse.ArgumentParser(description="AtriOS Gowin 25x16 LED Matrix Diagnostic Utility")
     parser.add_argument("--clock", action="store_true", help="Draw current time (HH:MM)")
-    parser.add_argument("--eyes", action="store_true", help="Animate cute Alice eyes")
-    parser.add_argument("--gradient", action="store_true", help="Display RGB test gradient")
+    parser.add_argument("--ticker", type=str, metavar="TEXT", help="Scroll smooth text ticker")
+    parser.add_argument("--eyes", action="store_true", help="Animate Alice eyes")
+    parser.add_argument("--smile", action="store_true", help="Display happy smiling face")
+    parser.add_argument("--gradient", action="store_true", help="Display 2D brightness gradient")
+    parser.add_argument("--fill", type=int, metavar="0..255", help="Fill screen with brightness level")
+    parser.add_argument("--brightness", type=int, default=220, help="Default brightness (0..255)")
     parser.add_argument("--off", action="store_true", help="Clear / turn off screen")
+    parser.add_argument("--test", action="store_true", help="Run full self-test suite")
+
     args = parser.parse_args()
 
     if args.off:
         clear_screen()
-        print("[Screen Test] Screen cleared.")
-    elif args.color:
-        fill_color(*args.color)
-        print(f"[Screen Test] Screen filled with RGB={args.color}")
+        print("[Screen] Screen cleared.")
     elif args.clock:
-        draw_clock()
+        draw_clock(args.brightness)
+    elif args.ticker:
+        scroll_ticker(args.ticker, brightness=args.brightness)
     elif args.eyes:
-        print("[Screen Test] Animating eyes...")
-        for _ in range(3):
-            draw_eyes(blink=False)
-            time.sleep(1.5)
-            draw_eyes(blink=True)
-            time.sleep(0.15)
-        draw_eyes(blink=False)
+        animate_eyes(cycles=3, brightness=args.brightness)
+    elif args.smile:
+        draw_smile(args.brightness)
     elif args.gradient:
-        buf = bytearray(FRAME_SIZE)
-        for y in range(HEIGHT):
-            for x in range(WIDTH):
-                r = int(255 * (x / WIDTH))
-                g = int(255 * (y / HEIGHT))
-                b = int(255 * (1.0 - x / WIDTH))
-                set_pixel(buf, x, y, r, g, b)
-        send_frame(buf)
-        print("[Screen Test] RGB gradient displayed.")
+        draw_gradient()
+    elif args.fill is not None:
+        fill_screen(args.fill)
+        print(f"[Screen] Screen filled with brightness = {args.fill}/255")
+    elif args.test:
+        run_hardware_test()
     else:
-        print("[Screen Test] Running matrix self-test:")
-        fill_color(255, 0, 0)
-        time.sleep(0.5)
-        fill_color(0, 255, 0)
-        time.sleep(0.5)
-        fill_color(0, 0, 255)
-        time.sleep(0.5)
-        draw_clock()
-        print("[Screen Test] Test complete.")
+        # Default behavior with no arguments: Run full test
+        run_hardware_test()
 
 if __name__ == "__main__":
     main()
