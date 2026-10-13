@@ -1,3 +1,4 @@
+# compatible: sy6045s
 # reset
 
 w 56 0F 01

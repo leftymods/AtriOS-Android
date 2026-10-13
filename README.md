@@ -44,7 +44,7 @@
 | **Firmware Build System** | Self-contained build pipeline (`build_atrios.sh`) | Host / WSL2 | `make_ext4fs` + `ampack` (Lightweight 1.46GB) | [x] Verified in pipeline |
 | **Bootloader & ROM Code** | Native S905X3 Bootloader (`DDR.USB`, `UBOOT.USB`) | eMMC / USB Burn | `ampack` v2 verified | [x] Verified on hardware |
 | **UART Serial Console** | Amlogic UART0 (115200 8N1) | `/dev/ttyS0` | `ttyS0` interactive root shell | [x] Verified on hardware |
-| **Monochrome LED Screen** | Gowin GW1N FPGA (25×16 white LEDs, per-pixel brightness 0..255) | SPI1 (`GPIOX_8`), CS: `GPIOH_7` | `gowin_led_device` (`/dev/fb4`, 400 bytes) | [x] Hardware verified |
+| **Monochrome LED Screen** | Gowin GW1N FPGA (25×16 white LEDs, per-pixel brightness 0..255) | SPI1 (`GPIOX_8`), CS: `GPIOH_7` | `gowin_led_device` (`/dev/fb4`, RGB888 1200B) | [x] Hardware verified |
 | **LED Ring** | Dual IS31FL3236A (24 RGB channels / 72 LEDs, Red/Blue fixed in DTB) | I2C0 (`0x3c`, `0x3f`) | `quasar_led_ring.ko` (`/dev/fb5`) | [x] Hardware verified |
 | **Light Sensor** | Lite-On LTR-308ALS ambient light sensor | I2C0 (`0x53`) | `ltr308als01` (`iio:device0`) | [x] Hardware verified |
 | **Rotary Knob (Volume)** | Dual-phase quadrature encoder | `GPIOH_6` (A), `GPIOAO_10` (B) | `rotary-volume.ko` | [x] Hardware verified |
@@ -103,7 +103,7 @@ atrios-test-ring fill 255 0 0     # красный цвет
 atrios-test-ring off              # выключить
 ```
 
-### 4. Монохромный экран 25x16 (Gowin FPGA, 400 байт, яркость 0..255):
+### 4. Монохромный экран 25x16 (Gowin FPGA, 1200 байт RGB888, яркость 0..255):
 ```bash
 atrios-test-screen clock          # текущее время (HH:MM)
 atrios-test-screen ticker "HELLO" # плавная бегущая строка с полным шрифтом

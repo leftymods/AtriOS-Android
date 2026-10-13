@@ -28,12 +28,14 @@ case "$1" in
 
     # Unmute ALSA playback mixer channels and amplifier volume
     if command -v amixer >/dev/null 2>&1; then
-      amixer -c 0 sset 'Master Playback' 85% unmute 2>/dev/null || true
-      amixer -c 0 sset 'Master' 85% unmute 2>/dev/null || true
-      amixer -c 0 sset 'Ch1 Playback' 100% unmute 2>/dev/null || true
-      amixer -c 0 sset 'Ch2 Playback' 100% unmute 2>/dev/null || true
-      amixer -c 0 sset 'DAC' 100% unmute 2>/dev/null || true
-      amixer -c 0 sset 'TDM-B' unmute 2>/dev/null || true
+      for card in AMLAUGESOUND 0 1; do
+        amixer -c "$card" sset 'Master Playback' 85% unmute 2>/dev/null || true
+        amixer -c "$card" sset 'Master' 85% unmute 2>/dev/null || true
+        amixer -c "$card" sset 'Ch1 Playback' 100% unmute 2>/dev/null || true
+        amixer -c "$card" sset 'Ch2 Playback' 100% unmute 2>/dev/null || true
+        amixer -c "$card" sset 'DAC' 100% unmute 2>/dev/null || true
+        amixer -c "$card" sset 'TDM-B' unmute 2>/dev/null || true
+      done
     fi
     ;;
   stop)

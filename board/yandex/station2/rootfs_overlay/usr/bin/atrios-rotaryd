@@ -3,12 +3,13 @@
 AtriOS Hardware Interaction Daemon (atrios-rotaryd)
 Handles:
   - Rotary Knob: Volume up/down with animated LED ring arc feedback
-  - Top Button #2 (KEY_MICMUTE): Software Microphone Mute toggle + Red LED ring
-  - Top Button #1 (KEY_VOICECOMMAND / KEY_POWER): Alice/Assistant call, Play/Pause
+  - Top Button #2 (KEY_MICMUTE [248]): Software Microphone Mute toggle + Red LED ring
+  - Top Button #1 (KEY_VOICECOMMAND [582] / KEY_POWER [116]): Alice/Assistant call, Play/Pause
 """
 
 import sys
 import os
+import glob
 import struct
 import time
 import subprocess
@@ -61,18 +62,32 @@ def clear_ring():
 def toggle_software_mic_mute():
     global mic_muted
     mic_muted = not mic_muted
-    val = "1" if mic_muted else "0"
+
+    pw_val = "1" if mic_muted else "0"
+    alsa_cmd = "mute" if mic_muted else "unmute"
+    alsa_vol = "0%" if mic_muted else "100%"
+    sw_val = "0" if mic_muted else "1"
+
+    # PipeWire mute
     try:
-        subprocess.run(["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", val],
+        subprocess.run(["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", pw_val],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except Exception:
         pass
-    try:
-        cmd = "mute" if mic_muted else "unmute"
-        subprocess.run(["amixer", "-c", "0", "sset", "Capture", cmd],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    except Exception:
-        pass
+
+    # ALSA AMLAUGESOUND hardware capture mute
+    for card in ["AMLAUGESOUND", "0", "1"]:
+        try:
+            subprocess.run(["amixer", "-c", card, "sset", "Capture", alsa_cmd],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(["amixer", "-c", card, "sset", "Capture", alsa_vol],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            for ctrl in ["Capture Switch", "ADC Capture Switch", "Mic Capture Switch", "TDMIN_A Switch", "TDMIN_B Switch"]:
+                subprocess.run(["amixer", "-c", card, "cset", f"name={ctrl}", sw_val],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
+
     if mic_muted:
         show_mute_ring()
     else:
@@ -88,20 +103,18 @@ def adjust_volume(step):
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except Exception:
         pass
-    try:
-        subprocess.run(["amixer", "-c", "0", "sset", "Master", pct],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    except Exception:
-        pass
+    for card in ["AMLAUGESOUND", "0"]:
+        try:
+            subprocess.run(["amixer", "-c", card, "sset", "Master", pct],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(["amixer", "-c", card, "sset", "Master Playback", pct],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
     show_volume_ring(current_volume)
 
 def find_devices():
-    devs = []
-    for i in range(12):
-        p = f"/dev/input/event{i}"
-        if os.path.exists(p):
-            devs.append(p)
-    return devs
+    return sorted(glob.glob("/dev/input/event*"))
 
 def main():
     EVENT_FORMAT = "QQHHi"
@@ -154,10 +167,8 @@ def main():
                             elif ev_value == 0:
                                 duration = time.time() - top_press_time
                                 if duration >= 2.5:
-                                    # Very long press: trigger setup/bluetooth mode
                                     pass
                                 else:
-                                    # Short click: Toggle Play/Pause or Voice prompt
                                     try:
                                         subprocess.run(["playerctl", "play-pause"],
                                                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

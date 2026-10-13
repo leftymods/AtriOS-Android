@@ -7,7 +7,6 @@ case "$1" in
     depmod -a 2>/dev/null || true
 
     # 1. Audio drivers & codecs
-    modprobe snd-aloop 2>/dev/null || insmod /lib/modules/4.9.113/snd-aloop.ko 2>/dev/null
     modprobe snd-soc-pcm1774 2>/dev/null || insmod /lib/modules/4.9.113/snd-soc-pcm1774.ko 2>/dev/null
     modprobe snd-soc-pcm1774-i2c 2>/dev/null || insmod /lib/modules/4.9.113/snd-soc-pcm1774-i2c.ko 2>/dev/null
     modprobe snd-soc-es7210 2>/dev/null || insmod /lib/modules/4.9.113/snd-soc-es7210.ko 2>/dev/null

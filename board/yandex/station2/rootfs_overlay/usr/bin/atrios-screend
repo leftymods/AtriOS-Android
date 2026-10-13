@@ -2,6 +2,11 @@
 """
 AtriOS Background Screen Clock Daemon (atrios-screend)
 Updates the front Gowin 25x16 monochrome matrix with current time (HH:MM).
+Hardware:
+  - Display: 25 columns x 16 rows monochrome white LED matrix with 8-bit individual brightness
+  - Kernel Driver: gowin_led_device (/dev/fb4) exposing RGB888 (24-bpp) framebuffer
+  - Stride: 25 * 3 = 75 bytes per row, total frame = 1200 bytes
+  - Mapping: Driver computes brightness = max(R, G, B) for each LED
 """
 
 import sys
@@ -11,7 +16,7 @@ import time
 FB_SCREEN = "/dev/fb4"
 WIDTH = 25
 HEIGHT = 16
-BPP = 1
+BPP = 3
 FRAME_SIZE = WIDTH * HEIGHT * BPP
 
 FONT = {
@@ -30,7 +35,11 @@ FONT = {
 
 def set_pixel(buf, x, y, brightness):
     if 0 <= x < WIDTH and 0 <= y < HEIGHT:
-        buf[y * WIDTH + x] = max(0, min(255, int(brightness)))
+        val = max(0, min(255, int(brightness)))
+        offset = (y * WIDTH + x) * BPP
+        buf[offset + 0] = val
+        buf[offset + 1] = val
+        buf[offset + 2] = val
 
 def send_frame(buf):
     try:
