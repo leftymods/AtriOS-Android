@@ -45,7 +45,7 @@
 | **Bootloader & ROM Code** | Native S905X3 Bootloader (`DDR.USB`, `UBOOT.USB`) | eMMC / USB Burn | `ampack` v2 verified | [x] Verified on hardware |
 | **UART Serial Console** | Amlogic UART0 (115200 8N1) | `/dev/ttyS0` | `ttyS0` interactive root shell | [x] Verified on hardware |
 | **Monochrome LED Screen** | Gowin GW1N FPGA (25×16 white LEDs, per-pixel brightness 0..255) | SPI1 (`GPIOX_8`), CS: `GPIOH_7` | `gowin_led_device` (`/dev/fb4`, 400 bytes) | [x] Hardware verified |
-| **LED Ring** | Dual IS31FL3236A (24 RGB channels / 72 LEDs) | I2C0 (`0x3c`, `0x3f`) | `quasar_led_ring.ko` (`/dev/fb5`) | [x] Hardware verified |
+| **LED Ring** | Dual IS31FL3236A (24 RGB channels / 72 LEDs, Red/Blue fixed in DTB) | I2C0 (`0x3c`, `0x3f`) | `quasar_led_ring.ko` (`/dev/fb5`) | [x] Hardware verified |
 | **Light Sensor** | Lite-On LTR-308ALS ambient light sensor | I2C0 (`0x53`) | `ltr308als01` (`iio:device0`) | [x] Hardware verified |
 | **Rotary Knob (Volume)** | Dual-phase quadrature encoder | `GPIOH_6` (A), `GPIOAO_10` (B) | `rotary-volume.ko` | [x] Hardware verified |
 | **Top Buttons (Alice / Mute)**| Dual Tactile Push Buttons | `GPIOA_15` (Alice), `GPIOA_14` (Mute) | `gpio_keypad` (polling mode) | [x] Configured in DTS |
@@ -166,10 +166,10 @@ AtriOS-Android/
 
 ```bash
 cd /home/lmods/AtriOS-Android
-./build_atrios.sh 105
+./build_atrios.sh 106
 ```
 
 Готовый образ для прошивки:  
-`tools/fw_builder/yandex_s905x3_custom_v105.img` (1.46 ГБ)
+`tools/fw_builder/yandex_s905x3_custom_v106.img` (1.46 ГБ)
 
 Прошивка осуществляется через стандартный **Amlogic USB Burning Tool** или через U-Boot команду `update`.
