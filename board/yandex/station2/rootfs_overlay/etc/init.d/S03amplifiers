@@ -6,19 +6,13 @@ case "$1" in
     echo "[AtriOS] Initializing audio amplifiers..."
     sleep 1
 
-    # Silergy SY6045S setup on I2C bus 2: write filename to settings_file sysfs attribute
+    # Check Silergy SY6045S hardware on I2C bus 2
     if [ -d "/sys/bus/i2c/drivers/sy6045s/2-002b" ]; then
-      echo "[AtriOS] SY6045S Woofer (2-002b) detected. Applying settings..."
-      if [ -f /lib/firmware/sy6045s-woofer-settings.txt ]; then
-        echo "sy6045s-woofer-settings.txt" > /sys/bus/i2c/drivers/sy6045s/2-002b/settings_file 2>/dev/null || true
-      fi
+      echo "[AtriOS] SY6045S Woofer (2-002b) detected."
     fi
 
     if [ -d "/sys/bus/i2c/drivers/sy6045s/2-002a" ]; then
-      echo "[AtriOS] SY6045S Tweeters (2-002a) detected. Applying settings..."
-      if [ -f /lib/firmware/sy6045s-tweeters-settings.txt ]; then
-        echo "sy6045s-tweeters-settings.txt" > /sys/bus/i2c/drivers/sy6045s/2-002a/settings_file 2>/dev/null || true
-      fi
+      echo "[AtriOS] SY6045S Tweeters (2-002a) detected."
     fi
 
     # TI TAS5825M fallback
