@@ -3,6 +3,7 @@
 # Controls:
 #   - AMLAUGESOUND hardware sound card (DAC / ADC)
 #   - Silergy SY6045S Woofer (2-002b) and Tweeters (2-002a) amplifiers
+#   - Everest ES8156 Headphone DAC (3.5mm jack)
 #   - 8-channel Everest ES7210 microphone array
 #   - System volume and software mic mute
 
@@ -22,14 +23,18 @@ case "$ACTION" in
       for inst in /sys/bus/i2c/drivers/sy6045s/2-00*; do
         if [ -d "$inst" ]; then
           bname=$(basename "$inst")
-          echo "  * Instance $bname: Registered"
+          fw=$(cat "$inst/settings_file" 2>/dev/null || echo "N/A")
+          echo "  * Instance $bname: Registered (firmware: $fw)"
         fi
       done
     else
       echo "  * SY6045S driver not loaded"
     fi
     echo ""
-    echo "[Playback Test]: Playing test chime on speakers..."
+    echo "[Amplifier Re-Init]: Applying hardware booster & un-mute..."
+    /etc/init.d/S03amplifiers start >/dev/null 2>&1 || true
+    echo ""
+    echo "[Playback Test]: Playing test chime on speakers / headphone jack..."
     if command -v speaker-test >/dev/null 2>&1; then
       speaker-test -D default -c 2 -r 48000 -t sine -f 440 -l 1 2>/dev/null || \
       speaker-test -D playback_plug -c 2 -r 48000 -t sine -f 440 -l 1 2>/dev/null || \
@@ -63,7 +68,7 @@ case "$ACTION" in
       exit 1
     fi
     echo "Playing $WAV..."
-    aplay -D "hw:$CARD,0" "$WAV" 2>/dev/null || aplay -D default "$WAV"
+    aplay -D default "$WAV" 2>/dev/null || aplay -D "hw:$CARD,0" "$WAV"
     ;;
 
   record)
@@ -78,17 +83,22 @@ case "$ACTION" in
   volume)
     VAL="$2"
     if [ -z "$VAL" ]; then
-      amixer -c "$CARD" sget 'Master' 2>/dev/null || amixer -c 0 sget 'Master' 2>/dev/null || true
+      amixer -c "$CARD" sget 'Woofer Master' 2>/dev/null || amixer -c "$CARD" sget 'Master' 2>/dev/null || true
     else
       echo "Setting volume to $VAL..."
+      amixer -c "$CARD" sset 'Woofer Master' "$VAL" 2>/dev/null || true
+      amixer -c "$CARD" sset 'Tweeters Master' "$VAL" 2>/dev/null || true
+      amixer -c "$CARD" sset 'Headphone DAC' "$VAL" 2>/dev/null || true
       amixer -c "$CARD" sset 'Master' "$VAL" 2>/dev/null || true
-      amixer -c 0 sset 'Master' "$VAL" 2>/dev/null || true
       if command -v wpctl >/dev/null 2>&1; then
         wpctl set-volume @DEFAULT_AUDIO_SINK@ "$VAL" 2>/dev/null || true
       fi
       if [ -x /usr/lib/atrios/light ]; then
         num=$(echo "$VAL" | tr -dc '0-9')
         [ -n "$num" ] && /usr/lib/atrios/light ring volume "$num" 2>/dev/null || true
+      elif [ -x /usr/bin/atrios-light ]; then
+        num=$(echo "$VAL" | tr -dc '0-9')
+        [ -n "$num" ] && /usr/bin/atrios-light ring volume "$num" 2>/dev/null || true
       fi
     fi
     ;;
@@ -96,32 +106,42 @@ case "$ACTION" in
   mute)
     STATE="$2"
     if [ "$STATE" = "off" ] || [ "$STATE" = "0" ] || [ "$STATE" = "unmute" ]; then
-      echo "Unmuting microphone array..."
+      echo "Unmuting playback and microphone array..."
+      amixer -c "$CARD" sset 'Woofer Master' unmute 2>/dev/null || true
+      amixer -c "$CARD" sset 'Tweeters Master' unmute 2>/dev/null || true
+      amixer -c "$CARD" sset 'Headphone Headphone' unmute 2>/dev/null || true
       amixer -c "$CARD" sset 'Capture' unmute 2>/dev/null || true
       amixer -c "$CARD" sset 'Capture' 100% 2>/dev/null || true
       wpctl set-mute @DEFAULT_AUDIO_SOURCE@ 0 2>/dev/null || true
+      wpctl set-mute @DEFAULT_AUDIO_SINK@ 0 2>/dev/null || true
+      [ -x /usr/lib/atrios/light ] && /usr/lib/atrios/light ring off 2>/dev/null || true
     else
-      echo "Muting microphone array..."
+      echo "Muting playback and microphone array (Ring -> RED)..."
+      amixer -c "$CARD" sset 'Woofer Master' mute 2>/dev/null || true
+      amixer -c "$CARD" sset 'Tweeters Master' mute 2>/dev/null || true
+      amixer -c "$CARD" sset 'Headphone Headphone' mute 2>/dev/null || true
       amixer -c "$CARD" sset 'Capture' mute 2>/dev/null || true
       amixer -c "$CARD" sset 'Capture' 0% 2>/dev/null || true
       wpctl set-mute @DEFAULT_AUDIO_SOURCE@ 1 2>/dev/null || true
+      wpctl set-mute @DEFAULT_AUDIO_SINK@ 1 2>/dev/null || true
+      [ -x /usr/lib/atrios/light ] && /usr/lib/atrios/light ring red 2>/dev/null || true
     fi
     ;;
 
   amps)
-    echo "Re-applying SY6045S settings..."
+    echo "Re-applying SY6045S and audio amplifier settings..."
     /etc/init.d/S03amplifiers start
     ;;
 
   *)
-    echo "Usage: atrios <command> [args]"
+    echo "Usage: atrios audio <command> [args]"
     echo "Commands:"
-    echo "  atrios test                   - Full playback & 8-channel mic array test"
-    echo "  atrios play [file.wav]        - Play audio through speakers"
-    echo "  atrios record [sec] [out.wav] - Record 8-channel audio from mic array"
-    echo "  atrios volume [0..100%]       - Get/set master volume"
-    echo "  atrios mute [on|off]          - Mute/unmute mic array"
-    echo "  atrios amps                   - Re-apply amplifier firmware settings"
+    echo "  atrios audio test                   - Full playback & 8-channel mic array test"
+    echo "  atrios audio play [file.wav]        - Play audio through speakers"
+    echo "  atrios audio record [sec] [out.wav] - Record 8-channel audio from mic array"
+    echo "  atrios audio volume [0..100%]       - Get/set volume on physical amplifiers"
+    echo "  atrios audio mute [on|off]          - Mute/unmute physical amplifiers & mic array"
+    echo "  atrios audio amps                   - Reload amplifier firmware settings"
     exit 1
     ;;
 esac

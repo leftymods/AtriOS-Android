@@ -102,9 +102,13 @@ def adjust_volume(step):
         pass
     for card in ["AMLAUGESOUND", "0"]:
         try:
-            subprocess.run(["amixer", "-c", card, "sset", "Master", pct],
+            subprocess.run(["amixer", "-c", card, "sset", "Woofer Master", pct],
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            subprocess.run(["amixer", "-c", card, "sset", "Master Playback", pct],
+            subprocess.run(["amixer", "-c", card, "sset", "Tweeters Master", pct],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(["amixer", "-c", card, "sset", "Headphone DAC", pct],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(["amixer", "-c", card, "sset", "Master", pct],
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except Exception:
             pass

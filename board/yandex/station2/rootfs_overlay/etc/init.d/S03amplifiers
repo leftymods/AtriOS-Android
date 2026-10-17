@@ -1,36 +1,106 @@
 #!/bin/sh
-# /etc/init.d/S03amplifiers - Initialize Silergy SY6045S / TI TAS5825M audio hardware amplifiers
+# /etc/init.d/S03amplifiers - Initialize Silergy SY6045S / Everest ES8156 hardware audio amplifiers
 
 case "$1" in
   start)
-    echo "[AtriOS] Initializing audio amplifiers..."
+    echo "[AtriOS] Initializing audio amplifiers and power booster..."
+
+    # 1. Enable 20V PVDD Amplifier Power Booster (GPIOX_9 / pin 75)
+    # Search for Amlogic periphs gpiochip base to find dynamic GPIO number if allocated dynamically
+    PVDD_GPIO=75
+    for chip in /sys/class/gpio/gpiochip*; do
+      if [ -f "$chip/label" ] && grep -qiE "periphs|bank" "$chip/label" 2>/dev/null; then
+        base=$(cat "$chip/base" 2>/dev/null)
+        if [ -n "$base" ] && [ "$base" -ge 0 ]; then
+          PVDD_GPIO=$((base + 75))
+          break
+        fi
+      fi
+    done
+
+    # Export & power on 20V booster rail across standard offsets
+    for g in 75 "$PVDD_GPIO" 485 410; do
+      if [ ! -d "/sys/class/gpio/gpio$g" ]; then
+        echo "$g" > /sys/class/gpio/export 2>/dev/null || true
+      fi
+      if [ -d "/sys/class/gpio/gpio$g" ]; then
+        echo out > "/sys/class/gpio/gpio$g/direction" 2>/dev/null || true
+        echo 1 > "/sys/class/gpio/gpio$g/value" 2>/dev/null || true
+      fi
+    done
+
     sleep 1
 
-    # Check Silergy SY6045S hardware on I2C bus 2
-    if [ -d "/sys/bus/i2c/drivers/sy6045s/2-002b" ]; then
-      echo "[AtriOS] SY6045S Woofer (2-002b) detected."
-    fi
-
+    # 2. Trigger firmware loading for Silergy SY6045S hardware amplifiers via sysfs
     if [ -d "/sys/bus/i2c/drivers/sy6045s/2-002a" ]; then
-      echo "[AtriOS] SY6045S Tweeters (2-002a) detected."
+      echo "[AtriOS] SY6045S Tweeters (2-002a) loading firmware..."
+      echo "sy6045s-tweeters-settings.txt" > /sys/bus/i2c/drivers/sy6045s/2-002a/settings_file 2>/dev/null || \
+      echo 1 > /sys/bus/i2c/drivers/sy6045s/2-002a/default_settings 2>/dev/null || true
     fi
 
-    # TI TAS5825M fallback
-    if [ -d "/sys/bus/i2c/drivers/tas5825m/2-004d" ]; then
-      echo "[AtriOS] TAS5825M detected on I2C bus 2."
+    if [ -d "/sys/bus/i2c/drivers/sy6045s/2-002b" ]; then
+      echo "[AtriOS] SY6045S Woofer (2-002b) loading firmware..."
+      echo "sy6045s-woofer-settings.txt" > /sys/bus/i2c/drivers/sy6045s/2-002b/settings_file 2>/dev/null || \
+      echo 1 > /sys/bus/i2c/drivers/sy6045s/2-002b/default_settings 2>/dev/null || true
     fi
 
-    # Unmute ALSA playback mixer channels and amplifier volume
+    # 3. Direct register verification via i2cset (ensuring unmute register 0x06=0x00 and 0x22=0x00)
+    if command -v i2cset >/dev/null 2>&1; then
+      i2cset -y -f 2 0x2a 0x06 0x00 2>/dev/null || true
+      i2cset -y -f 2 0x2a 0x22 0x00 2>/dev/null || true
+      i2cset -y -f 2 0x2b 0x06 0x00 2>/dev/null || true
+      i2cset -y -f 2 0x2b 0x22 0x00 2>/dev/null || true
+    fi
+
+    # 4. Configure ALSA hardware mixer controls for AMLAUGESOUND
     if command -v amixer >/dev/null 2>&1; then
-      for card in AMLAUGESOUND 0 1; do
-        amixer -c "$card" sset 'Master Playback' 85% unmute 2>/dev/null || true
-        amixer -c "$card" sset 'Master' 85% unmute 2>/dev/null || true
-        amixer -c "$card" sset 'Ch1 Playback' 100% unmute 2>/dev/null || true
-        amixer -c "$card" sset 'Ch2 Playback' 100% unmute 2>/dev/null || true
-        amixer -c "$card" sset 'DAC' 100% unmute 2>/dev/null || true
-        amixer -c "$card" sset 'TDM-B' unmute 2>/dev/null || true
-      done
+      card="AMLAUGESOUND"
+
+      # Audio output routing: route playback to TDMOUT_B
+      amixer -c "$card" cset name='Audio Out Sink' 'TDMOUT_B' 2>/dev/null || true
+      amixer -c "$card" cset name='Audio Out Sink' 1 2>/dev/null || true
+      amixer -c "$card" cset name='SPK mute' 0 2>/dev/null || true
+
+      # Woofer controls
+      amixer -c "$card" cset name='Woofer Master Playback Switch' 1 2>/dev/null || true
+      amixer -c "$card" cset name='Woofer Master Playback Volume' 255 2>/dev/null || true
+      amixer -c "$card" cset name='Woofer Ch1 Playback Switch' 1 2>/dev/null || true
+      amixer -c "$card" cset name='Woofer Ch1 Playback Volume' 255 2>/dev/null || true
+      amixer -c "$card" cset name='Woofer Ch2 Playback Switch' 1 2>/dev/null || true
+      amixer -c "$card" cset name='Woofer Ch2 Playback Volume' 255 2>/dev/null || true
+      amixer -c "$card" cset name='Woofer EQ Switch' 1 2>/dev/null || true
+      amixer -c "$card" cset name='Woofer DRC Switch' 1 2>/dev/null || true
+
+      # Tweeters controls
+      amixer -c "$card" cset name='Tweeters Master Playback Switch' 1 2>/dev/null || true
+      amixer -c "$card" cset name='Tweeters Master Playback Volume' 255 2>/dev/null || true
+      amixer -c "$card" cset name='Tweeters Ch1 Playback Switch' 1 2>/dev/null || true
+      amixer -c "$card" cset name='Tweeters Ch1 Playback Volume' 255 2>/dev/null || true
+      amixer -c "$card" cset name='Tweeters Ch2 Playback Switch' 1 2>/dev/null || true
+      amixer -c "$card" cset name='Tweeters Ch2 Playback Volume' 255 2>/dev/null || true
+      amixer -c "$card" cset name='Tweeters EQ Switch' 1 2>/dev/null || true
+      amixer -c "$card" cset name='Tweeters DRC Switch' 1 2>/dev/null || true
+
+      # Everest ES8156 Headphone DAC controls
+      amixer -c "$card" cset name='Headphone Headphone Switch' 1 2>/dev/null || true
+      amixer -c "$card" cset name='Headphone DAC Playback Volume' 255 2>/dev/null || true
+
+      # Amlogic SoC internal EQ & Audio Enhancement Engine (AED)
+      amixer -c "$card" cset name='EQ master volume mute' 0 2>/dev/null || true
+      amixer -c "$card" cset name='EQ master volume' 255 2>/dev/null || true
+      amixer -c "$card" cset name='AED master volume' 255 2>/dev/null || true
+      amixer -c "$card" cset name='AED Lch volume' 255 2>/dev/null || true
+      amixer -c "$card" cset name='AED Rch volume' 255 2>/dev/null || true
+      amixer -c "$card" cset name='AED EQ enable' 1 2>/dev/null || true
+
+      # ALSA Simple Mixer sset fallbacks
+      amixer -c "$card" sset 'Woofer Master' 100% unmute 2>/dev/null || true
+      amixer -c "$card" sset 'Tweeters Master' 100% unmute 2>/dev/null || true
+      amixer -c "$card" sset 'Headphone Headphone' unmute 2>/dev/null || true
+      amixer -c "$card" sset 'Headphone DAC' 100% 2>/dev/null || true
     fi
+
+    echo "[AtriOS] Audio amplifiers initialized."
     ;;
   stop)
     ;;
