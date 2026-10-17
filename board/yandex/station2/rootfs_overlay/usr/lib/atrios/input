@@ -106,6 +106,24 @@ def toggle_software_mic_mute(is_muted):
 def discover_input_devices():
     devices = {}
     paths = sorted(glob.glob("/dev/input/event*"))
+
+    # Fallback: if /dev/input/event* nodes missing in devtmpfs, check sysfs and create nodes
+    if not paths:
+        for p in sorted(glob.glob("/sys/class/input/event*")):
+            dev_name = os.path.basename(p)
+            dev_path = f"/dev/input/{dev_name}"
+            dev_f = f"{p}/dev"
+            if os.path.exists(dev_f):
+                try:
+                    with open(dev_f, "r") as df:
+                        major, minor = df.read().strip().split(":")
+                        os.makedirs("/dev/input", exist_ok=True)
+                        os.system(f"mknod {dev_path} c {major} {minor} 2>/dev/null")
+                except Exception:
+                    pass
+            if os.path.exists(dev_path):
+                paths.append(dev_path)
+
     for path in paths:
         name = os.path.basename(path)
         sys_name_path = f"/sys/class/input/{name}/device/name"
@@ -119,14 +137,24 @@ def discover_input_devices():
     return devices
 
 def main():
-    devices = discover_input_devices()
-    if not devices:
-        print("[Buttons Test] ERROR: No /dev/input/event* devices detected!", flush=True)
-        sys.exit(1)
-
     print("==========================================================", flush=True)
     print("      AtriOS Buttons, Knob, Sensor & Mic Mute Monitor     ", flush=True)
     print("==========================================================", flush=True)
+
+    devices = discover_input_devices()
+    if not devices:
+        print("[Buttons Test] No /dev/input/event* devices detected.", flush=True)
+        if os.path.exists("/proc/bus/input/devices"):
+            print("System input devices (/proc/bus/input/devices):", flush=True)
+            try:
+                with open("/proc/bus/input/devices", "r") as f:
+                    for line in f:
+                        if line.startswith("N: Name=") or line.startswith("H: Handlers="):
+                            print(f"  {line.strip()}", flush=True)
+            except Exception:
+                pass
+        sys.exit(1)
+
     lux = read_ambient_lux()
     if lux is not None:
         print(f"Ambient Light Sensor (LTR-308ALS): \033[1;36m{lux:.1f} Lux\033[0m", flush=True)
@@ -142,6 +170,10 @@ def main():
             print(f"  * {path:18s} -> {name}", flush=True)
         except Exception as e:
             print(f"  * {path:18s} -> (Could not open: {e})", flush=True)
+
+    if not open_fds:
+        print("[Buttons Test] ERROR: Could not open any input event devices for reading!", flush=True)
+        sys.exit(1)
 
     print("\nPhysical Button Map:", flush=True)
     print("  * Top Button 1: Assistant / Alice (KEY_VOICECOMMAND [582])", flush=True)

@@ -41,10 +41,8 @@ cp "$TOOLS_DIR/overlay/dts/sm1_s905x3_yandex.dtb" "$PROJECT_ROOT/common/arch/arm
 
 echo "[4/6] Configuring & Building Buildroot rootfs..."
 cd "$BUILDROOT_DIR"
-if [ ! -f .config ]; then
-    echo "Applying AtriOS Station 2 configuration..."
-    make yandex_station2_defconfig
-fi
+echo "Applying AtriOS Station 2 configuration..."
+make yandex_station2_defconfig
 
 make -j$(nproc)
 

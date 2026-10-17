@@ -123,6 +123,9 @@ case "$CMD" in
       fi
     elif [ "$SUBCMD" = "scan" ]; then
       echo "Scanning for nearby Bluetooth devices..."
+      if command -v hciconfig >/dev/null 2>&1; then
+        hciconfig hci0 up 2>/dev/null || true
+      fi
       if command -v bluetoothctl >/dev/null 2>&1; then
         timeout 5 bluetoothctl scan on 2>/dev/null || true
       elif command -v hcitool >/dev/null 2>&1; then
@@ -142,7 +145,7 @@ case "$CMD" in
   zigbee)
     SUBCMD="${2:-status}"
     ZB_DEV=""
-    for dev in /dev/ttyAML4 /dev/ttyS4; do
+    for dev in /dev/ttyAML4 /dev/ttyS4 /dev/ttyAML3 /dev/ttyS3 /dev/ttyAML2 /dev/ttyS2; do
       if [ -c "$dev" ]; then
         ZB_DEV="$dev"
         break

@@ -5,42 +5,23 @@ case "$1" in
   start)
     echo "[AtriOS] Initializing audio amplifiers and power booster..."
 
-    # 1. Enable 20V PVDD Amplifier Power Booster (GPIOX_9 / pin 75)
-    # Search for Amlogic periphs gpiochip base to find dynamic GPIO number if allocated dynamically
-    PVDD_GPIO=75
-    for chip in /sys/class/gpio/gpiochip*; do
-      if [ -f "$chip/label" ] && grep -qiE "periphs|bank" "$chip/label" 2>/dev/null; then
-        base=$(cat "$chip/base" 2>/dev/null)
-        if [ -n "$base" ] && [ "$base" -ge 0 ]; then
-          PVDD_GPIO=$((base + 75))
-          break
-        fi
-      fi
-    done
-
-    # Export & power on 20V booster rail across standard offsets
-    for g in 75 "$PVDD_GPIO" 485 410; do
-      if [ ! -d "/sys/class/gpio/gpio$g" ]; then
-        echo "$g" > /sys/class/gpio/export 2>/dev/null || true
-      fi
+    # 1. 20V PVDD Amplifier Power Booster rail is powered by fixedregulator-20v-amp in DTS.
+    # Check dynamic GPIOs if available
+    for g in 485 410; do
       if [ -d "/sys/class/gpio/gpio$g" ]; then
         echo out > "/sys/class/gpio/gpio$g/direction" 2>/dev/null || true
         echo 1 > "/sys/class/gpio/gpio$g/value" 2>/dev/null || true
       fi
     done
 
-    sleep 1
-
-    # 2. Trigger firmware loading for Silergy SY6045S hardware amplifiers via sysfs
+    # 2. Trigger firmware loading for Silergy SY6045S hardware amplifiers via default_settings sysfs
     if [ -d "/sys/bus/i2c/drivers/sy6045s/2-002a" ]; then
-      echo "[AtriOS] SY6045S Tweeters (2-002a) loading firmware..."
-      echo "sy6045s-tweeters-settings.txt" > /sys/bus/i2c/drivers/sy6045s/2-002a/settings_file 2>/dev/null || \
+      echo "[AtriOS] SY6045S Tweeters (2-002a) applying default settings..."
       echo 1 > /sys/bus/i2c/drivers/sy6045s/2-002a/default_settings 2>/dev/null || true
     fi
 
     if [ -d "/sys/bus/i2c/drivers/sy6045s/2-002b" ]; then
-      echo "[AtriOS] SY6045S Woofer (2-002b) loading firmware..."
-      echo "sy6045s-woofer-settings.txt" > /sys/bus/i2c/drivers/sy6045s/2-002b/settings_file 2>/dev/null || \
+      echo "[AtriOS] SY6045S Woofer (2-002b) applying default settings..."
       echo 1 > /sys/bus/i2c/drivers/sy6045s/2-002b/default_settings 2>/dev/null || true
     fi
 

@@ -93,12 +93,9 @@ case "$ACTION" in
       if command -v wpctl >/dev/null 2>&1; then
         wpctl set-volume @DEFAULT_AUDIO_SINK@ "$VAL" 2>/dev/null || true
       fi
-      if [ -x /usr/lib/atrios/light ]; then
+      if [ -f /usr/lib/atrios/light ]; then
         num=$(echo "$VAL" | tr -dc '0-9')
-        [ -n "$num" ] && /usr/lib/atrios/light ring volume "$num" 2>/dev/null || true
-      elif [ -x /usr/bin/atrios-light ]; then
-        num=$(echo "$VAL" | tr -dc '0-9')
-        [ -n "$num" ] && /usr/bin/atrios-light ring volume "$num" 2>/dev/null || true
+        [ -n "$num" ] && python3 /usr/lib/atrios/light ring volume "$num" 2>/dev/null || true
       fi
     fi
     ;;
@@ -114,7 +111,7 @@ case "$ACTION" in
       amixer -c "$CARD" sset 'Capture' 100% 2>/dev/null || true
       wpctl set-mute @DEFAULT_AUDIO_SOURCE@ 0 2>/dev/null || true
       wpctl set-mute @DEFAULT_AUDIO_SINK@ 0 2>/dev/null || true
-      [ -x /usr/lib/atrios/light ] && /usr/lib/atrios/light ring off 2>/dev/null || true
+      [ -f /usr/lib/atrios/light ] && python3 /usr/lib/atrios/light ring off 2>/dev/null || true
     else
       echo "Muting playback and microphone array (Ring -> RED)..."
       amixer -c "$CARD" sset 'Woofer Master' mute 2>/dev/null || true
@@ -124,7 +121,7 @@ case "$ACTION" in
       amixer -c "$CARD" sset 'Capture' 0% 2>/dev/null || true
       wpctl set-mute @DEFAULT_AUDIO_SOURCE@ 1 2>/dev/null || true
       wpctl set-mute @DEFAULT_AUDIO_SINK@ 1 2>/dev/null || true
-      [ -x /usr/lib/atrios/light ] && /usr/lib/atrios/light ring red 2>/dev/null || true
+      [ -f /usr/lib/atrios/light ] && python3 /usr/lib/atrios/light ring red 2>/dev/null || true
     fi
     ;;
 

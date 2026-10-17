@@ -36,17 +36,17 @@ EOT
 c="$1"
 [ $# -gt 0 ] && shift
 case "$c" in
-  screen|ring|sensor) exec $L/light "$c" "$@" ;;
-  kisser|cat|boykisser) exec $L/light screen kisser "$@" ;;
-  eyes)               exec $L/light screen eyes "$@" ;;
-  clock|ticker)       exec $L/light screen "$c" "$@" ;;
-  light)              exec $L/light "$@" ;;
-  test|play|record|volume|mute|amps) exec $L/audio "$c" "$@" ;;
-  audio)              exec $L/audio "$@" ;;
-  wifi|bt|bluetooth|zigbee) exec $L/wireless "$c" "$@" ;;
-  wireless)           exec $L/wireless "$@" ;;
-  status)             exec $L/wireless status ;;
-  input|buttons)      exec $L/input "$@" ;;
+  screen|ring|sensor) exec python3 $L/light "$c" "$@" ;;
+  kisser|cat|boykisser) exec python3 $L/light screen kisser "$@" ;;
+  eyes)               exec python3 $L/light screen eyes "$@" ;;
+  clock|ticker)       exec python3 $L/light screen "$c" "$@" ;;
+  light)              exec python3 $L/light "$@" ;;
+  test|play|record|volume|mute|amps) exec /bin/sh $L/audio "$c" "$@" ;;
+  audio)              exec /bin/sh $L/audio "$@" ;;
+  wifi|bt|bluetooth|zigbee) exec /bin/sh $L/wireless "$c" "$@" ;;
+  wireless)           exec /bin/sh $L/wireless "$@" ;;
+  status)             exec /bin/sh $L/wireless status ;;
+  input|buttons)      exec python3 $L/input "$@" ;;
   ""|help|-h|--help)  usage ;;
   *) echo "atrios: unknown command '$c'"; echo; usage; exit 1 ;;
 esac
