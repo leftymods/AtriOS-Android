@@ -76,7 +76,7 @@ atrios [команда] [параметры]
 | Команда | Описание | Пример использования |
 |:---|:---|:---|
 | `status` | Состояние сетевых интерфейсов (Wi-Fi, Bluetooth, Zigbee) | `atrios status` |
-| `screen` | Управление матричным экраном 25×16 (Gowin FPGA) | `atrios screen ticker "HELLO"`<br>`atrios screen clock`<br>`atrios screen happy`<br>`atrios screen fill 128`<br>`atrios screen off` |
+| `screen` | Управление матричным экраном 25×16 (Gowin FPGA) | `atrios screen kisser [1\|2\|animate]`<br>`atrios screen eyes [open\|blink\|wink\|happy\|love\|wide\|angry\|sleep\|cry\|animate]`<br>`atrios screen ticker "HELLO"`<br>`atrios screen clock`<br>`atrios screen off` |
 | `ring` | Управление верхним 24-канальным RGB-кольцом | `atrios ring rainbow`<br>`atrios ring volume 75`<br>`atrios ring off` |
 | `sensor` | Считывание уровня освещённости (люксы) | `atrios sensor` |
 | `input` | Интерактивный монитор нажатий кнопок и энкодера | `atrios input` |

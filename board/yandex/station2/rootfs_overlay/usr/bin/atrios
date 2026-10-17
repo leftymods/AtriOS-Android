@@ -10,8 +10,9 @@ AtriOS - Yandex Station Max tools
   atrios test                        Speakers + microphone array test
 
   Screen (25x16):
-    atrios screen clock|smile|happy|eyes [state]|ticker "TEXT"
-    atrios screen fill [0..255] | pixel X Y [B] | gradient | off
+    atrios screen kisser [1|2|animate]  Boykisser cat animation
+    atrios screen eyes [state]          Eyes (open/blink/wink/left/right/up/down/happy/love/wide/angry/sleep/cry/squint/dizzy/animate)
+    atrios screen clock|ticker "TEXT"|fill [0..255]|pixel X Y [B]|gradient|off
   LED ring (24 RGB):
     atrios ring rainbow|volume N|off
   Light sensor:
@@ -36,6 +37,9 @@ c="$1"
 [ $# -gt 0 ] && shift
 case "$c" in
   screen|ring|sensor) exec $L/light "$c" "$@" ;;
+  kisser|cat|boykisser) exec $L/light screen kisser "$@" ;;
+  eyes)               exec $L/light screen eyes "$@" ;;
+  clock|ticker)       exec $L/light screen "$c" "$@" ;;
   light)              exec $L/light "$@" ;;
   test|play|record|volume|mute|amps) exec $L/audio "$c" "$@" ;;
   audio)              exec $L/audio "$@" ;;

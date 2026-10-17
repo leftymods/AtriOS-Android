@@ -129,6 +129,112 @@ def screen_clock(brightness=220):
     screen_send_frame(buf)
     print(f"[Screen] Clock: {now} (brightness={brightness}/255)", flush=True)
 
+BOYKISSER_F1 = [
+    "  #                   #  ",  # 0
+    " ###                 ### ",  # 1
+    " # ##       #       ## # ",  # 2
+    " #  ##     ###     ##  # ",  # 3
+    " #   ##   #####   ##   # ",  # 4
+    "#     #############     #",  # 5
+    "##    ###       ###    ##",  # 6  Eyes (left 6..8, right 16..18)
+    " #   ####       ####   # ",  # 7
+    " #   ####       ####   # ",  # 8
+    "##   ###         ###   ##",  # 9
+    "#  ##     #   #     ##  #",  # 10 Blush (3..4, 20..21) + :3
+    " ##        # #        ## ",  # 11
+    "   ##       #       ##   ",  # 12 Chin
+    "    ###           ###    ",  # 13
+    "     #             #     ",  # 14
+    "                         ",  # 15
+]
+
+BOYKISSER_F2 = [
+    "  #                   #  ",  # 0
+    " ###                 ### ",  # 1
+    " # ##       #       ## # ",  # 2
+    " #  ##     ###     ##  # ",  # 3
+    " #   ##   #####   ##   # ",  # 4
+    "#     #############     #",  # 5
+    "##                     ##",  # 6
+    " #   ##           ##   # ",  # 7  Eyes > < (5..8, 16..19)
+    " #    ####     ####    # ",  # 8
+    "##   ##   #####   ##   ##",  # 9  Mouth top (10..14)
+    "#  ##    #     #    ##  #",  # 10 Open mouth (:D) + Blush (3..4, 20..21)
+    " ##       #   #       ## ",  # 11
+    "   ##      ###      ##   ",  # 12 Mouth bottom
+    "    ###           ###    ",  # 13
+    "     #             #     ",  # 14
+    "                         ",  # 15
+]
+
+def render_matrix_pattern(pattern, brightness=220, blush_cells=None, highlight_cells=None):
+    buf = bytearray(SCR_SIZE)
+    blush_cells = blush_cells or []
+    highlight_cells = highlight_cells or []
+    for y, row in enumerate(pattern):
+        if y >= SCR_H:
+            break
+        for x, ch in enumerate(row):
+            if x >= SCR_W:
+                break
+            if ch == '#':
+                val = brightness
+                if (x, y) in highlight_cells:
+                    val = 255
+                elif (x, y) in blush_cells:
+                    val = max(50, int(brightness * 0.45))
+                screen_set_pixel(buf, x, y, val)
+    return buf
+
+def screen_boykisser(mode="animate", brightness=220, loops=None):
+    blush = [(3, 10), (4, 10), (20, 10), (21, 10)]
+    highlights = [(7, 6), (17, 6)]
+    f1_buf = render_matrix_pattern(BOYKISSER_F1, brightness, blush, highlights)
+    f2_buf = render_matrix_pattern(BOYKISSER_F2, brightness, blush, [])
+
+    blink_f1 = list(BOYKISSER_F1)
+    blink_f1[6] = "##                     ##"
+    blink_f1[7] = " #   ####       ####   # "
+    blink_f1[8] = " #                     # "
+    blink_f1[9] = "##                     ##"
+    f1_blink_buf = render_matrix_pattern(blink_f1, brightness, blush, [])
+
+    if mode in ("1", "calm", "frame1"):
+        screen_send_frame(f1_buf)
+        print("[Screen] Boykisser Frame 1 (Calm :3)", flush=True)
+        return
+    elif mode in ("2", "happy", "frame2"):
+        screen_send_frame(f2_buf)
+        print("[Screen] Boykisser Frame 2 (Happy >< :D)", flush=True)
+        return
+
+    print("[Screen] Playing Boykisser animation (Frame 1 -> Frame 2)... Press Ctrl+C to stop", flush=True)
+    count = 0
+    try:
+        while loops is None or count < loops:
+            # Frame 1 (calm)
+            screen_send_frame(f1_buf)
+            time.sleep(1.2)
+
+            # Natural quick blink
+            screen_send_frame(f1_blink_buf)
+            time.sleep(0.12)
+            screen_send_frame(f1_buf)
+            time.sleep(0.6)
+
+            # Transition to Frame 2 (happy >< :D)
+            screen_send_frame(f2_buf)
+            time.sleep(1.4)
+
+            # Happy head-bob
+            screen_send_frame(f1_buf)
+            time.sleep(0.25)
+            screen_send_frame(f2_buf)
+            time.sleep(0.9)
+            count += 1
+    except KeyboardInterrupt:
+        pass
+
 def screen_eyes(state="open", brightness=220):
     buf = bytearray(SCR_SIZE)
     if state == "open":
@@ -150,19 +256,40 @@ def screen_eyes(state="open", brightness=220):
                 screen_set_pixel(buf, x, y, brightness)
             for x in range(14, 19):
                 screen_set_pixel(buf, x, y, brightness)
+        screen_set_pixel(buf, 3, 5, 255)
+        screen_set_pixel(buf, 15, 5, 255)
     elif state == "right":
         for y in range(4, 11):
             for x in range(6, 11):
                 screen_set_pixel(buf, x, y, brightness)
             for x in range(18, 23):
                 screen_set_pixel(buf, x, y, brightness)
+        screen_set_pixel(buf, 9, 5, 255)
+        screen_set_pixel(buf, 21, 5, 255)
+    elif state == "up":
+        for y in range(2, 9):
+            for x in range(4, 9):
+                screen_set_pixel(buf, x, y, brightness)
+            for x in range(16, 21):
+                screen_set_pixel(buf, x, y, brightness)
+        screen_set_pixel(buf, 5, 3, 255)
+        screen_set_pixel(buf, 17, 3, 255)
+    elif state == "down":
+        for y in range(6, 13):
+            for x in range(4, 9):
+                screen_set_pixel(buf, x, y, brightness)
+            for x in range(16, 21):
+                screen_set_pixel(buf, x, y, brightness)
+        screen_set_pixel(buf, 5, 11, 255)
+        screen_set_pixel(buf, 17, 11, 255)
     elif state == "wink":
         for y in range(4, 11):
             for x in range(4, 9):
                 screen_set_pixel(buf, x, y, brightness)
+        screen_set_pixel(buf, 5, 5, 255)
         for x in range(15, 22):
             screen_set_pixel(buf, x, 7, brightness)
-    elif state == "happy":
+    elif state in ("happy", "smile"):
         for x in range(4, 9):
             screen_set_pixel(buf, x, 4, brightness)
         screen_set_pixel(buf, 3, 5, brightness)
@@ -171,8 +298,146 @@ def screen_eyes(state="open", brightness=220):
             screen_set_pixel(buf, x, 4, brightness)
         screen_set_pixel(buf, 15, 5, brightness)
         screen_set_pixel(buf, 21, 5, brightness)
+    elif state in ("love", "heart", "hearts"):
+        pattern = [
+            "   ##   ##     ##   ##   ",
+            "  #### ####   #### ####  ",
+            "  #########   #########  ",
+            "   #######     #######   ",
+            "    #####       #####    ",
+            "     ###         ###     ",
+            "      #           #      ",
+        ]
+        for y_idx, row in enumerate(pattern):
+            for x_idx, ch in enumerate(row):
+                if ch == '#':
+                    screen_set_pixel(buf, x_idx, 4 + y_idx, brightness)
+    elif state in ("surprised", "wide"):
+        for y in range(3, 12):
+            for x in range(3, 10):
+                if 4 <= y <= 10 and 4 <= x <= 8:
+                    continue
+                screen_set_pixel(buf, x, y, brightness)
+            for x in range(15, 22):
+                if 4 <= y <= 10 and 16 <= x <= 20:
+                    continue
+                screen_set_pixel(buf, x, y, brightness)
+        screen_set_pixel(buf, 6, 7, brightness)
+        screen_set_pixel(buf, 18, 7, brightness)
+    elif state == "angry":
+        pattern = [
+            "  ######         ######  ",
+            "   #####         #####   ",
+            "    ####         ####    ",
+            "     ###         ###     ",
+            "      ##         ##      ",
+            "       #         #       ",
+        ]
+        for y_idx, row in enumerate(pattern):
+            for x_idx, ch in enumerate(row):
+                if ch == '#':
+                    screen_set_pixel(buf, x_idx, 5 + y_idx, brightness)
+    elif state in ("sleep", "sleeping"):
+        for x in range(3, 9):
+            screen_set_pixel(buf, x, 9, brightness)
+        for x in range(16, 22):
+            screen_set_pixel(buf, x, 9, brightness)
+    elif state in ("sad", "cry"):
+        for x in range(4, 9):
+            screen_set_pixel(buf, x, 7, brightness)
+        screen_set_pixel(buf, 3, 6, brightness)
+        screen_set_pixel(buf, 9, 8, brightness)
+        for x in range(16, 21):
+            screen_set_pixel(buf, x, 7, brightness)
+        screen_set_pixel(buf, 15, 8, brightness)
+        screen_set_pixel(buf, 21, 6, brightness)
+    elif state == "squint":
+        for x in range(3, 10):
+            screen_set_pixel(buf, x, 7, brightness)
+            screen_set_pixel(buf, x, 8, brightness)
+        for x in range(15, 22):
+            screen_set_pixel(buf, x, 7, brightness)
+            screen_set_pixel(buf, x, 8, brightness)
+    elif state in ("dizzy", "spiral"):
+        coords = [
+            (5, 5), (6, 5), (7, 5), (8, 6), (8, 7), (8, 8), (7, 9), (6, 9), (5, 8), (6, 7),
+            (17, 5), (18, 5), (19, 5), (20, 6), (20, 7), (20, 8), (19, 9), (18, 9), (17, 8), (18, 7)
+        ]
+        for x, y in coords:
+            screen_set_pixel(buf, x, y, brightness)
     screen_send_frame(buf)
     print(f"[Screen] Eyes: {state} (brightness={brightness}/255)", flush=True)
+
+def screen_eyes_animated(sequence="animate", brightness=220):
+    print(f"[Screen] Running animated eyes: {sequence}...", flush=True)
+    try:
+        if sequence in ("sleep", "sleeping"):
+            for _ in range(5):
+                for z_step in range(4):
+                    buf = bytearray(SCR_SIZE)
+                    for x in range(3, 9):
+                        screen_set_pixel(buf, x, 9, brightness)
+                    for x in range(16, 22):
+                        screen_set_pixel(buf, x, 9, brightness)
+                    # Floating Z
+                    if z_step >= 1:
+                        screen_set_pixel(buf, 18, 6, int(brightness * 0.5))
+                    if z_step >= 2:
+                        screen_set_pixel(buf, 20, 4, int(brightness * 0.75))
+                    if z_step >= 3:
+                        screen_set_pixel(buf, 22, 2, brightness)
+                    screen_send_frame(buf)
+                    time.sleep(0.4)
+        elif sequence in ("sad", "cry"):
+            for _ in range(3):
+                for tear_y in range(8, 14):
+                    buf = bytearray(SCR_SIZE)
+                    # Sad eyes
+                    for x in range(4, 9):
+                        screen_set_pixel(buf, x, 7, brightness)
+                    screen_set_pixel(buf, 3, 6, brightness)
+                    screen_set_pixel(buf, 9, 8, brightness)
+                    for x in range(16, 21):
+                        screen_set_pixel(buf, x, 7, brightness)
+                    screen_set_pixel(buf, 15, 8, brightness)
+                    screen_set_pixel(buf, 21, 6, brightness)
+                    # Tear drop
+                    screen_set_pixel(buf, 6, tear_y, 255)
+                    screen_set_pixel(buf, 18, tear_y, 255)
+                    screen_send_frame(buf)
+                    time.sleep(0.12)
+        elif sequence in ("love", "heart", "hearts"):
+            for _ in range(4):
+                screen_eyes("love", brightness)
+                time.sleep(0.5)
+                screen_eyes("love", int(brightness * 0.4))
+                time.sleep(0.25)
+        elif sequence == "look":
+            for s in ["open", "left", "up", "right", "down", "open"]:
+                screen_eyes(s, brightness)
+                time.sleep(0.5)
+        else:
+            # Idle alive sequence
+            seq = [
+                ("open", 1.2),
+                ("blink", 0.15),
+                ("open", 0.8),
+                ("left", 0.6),
+                ("open", 0.5),
+                ("right", 0.6),
+                ("open", 0.8),
+                ("wink", 0.4),
+                ("open", 0.5),
+                ("happy", 1.0),
+                ("open", 0.8),
+                ("love", 1.0),
+                ("open", 1.0),
+            ]
+            for s, pause in seq:
+                screen_eyes(s, brightness)
+                time.sleep(pause)
+    except KeyboardInterrupt:
+        pass
 
 def screen_ticker(text, brightness=220, speed=0.07):
     text = " " + text.upper() + " "
@@ -270,7 +535,7 @@ def main():
     # Screen parser
     p_scr = subparsers.add_parser("screen", help="Front 25x16 monochrome matrix")
     p_scr.add_argument("action", nargs="?", default="clock",
-                       choices=["clock", "eyes", "ticker", "pixel", "row", "col", "gradient", "fill", "clear", "off", "smile", "happy", "test"],
+                       choices=["clock", "eyes", "kisser", "cat", "boykisser", "ticker", "pixel", "row", "col", "gradient", "fill", "clear", "off", "smile", "happy", "test"],
                        help="Action to perform")
     p_scr.add_argument("value", nargs="*", help="Arguments for action (e.g. text for ticker, X Y for pixel)")
     p_scr.add_argument("--brightness", type=int, default=220, help="Brightness level (0..255)")
@@ -325,12 +590,13 @@ def main():
             screen_fill(val)
         elif act == "clock":
             screen_clock(b)
+        elif act in ("kisser", "cat", "boykisser"):
+            mode = args.value[0] if args.value else "animate"
+            screen_boykisser(mode, b)
         elif act in ("eyes", "smile", "happy"):
             state = "happy" if act in ("smile", "happy") else (args.value[0] if args.value else "open")
-            if state == "animate":
-                for s in ["open", "wink", "open", "blink", "open", "left", "right", "happy", "open"]:
-                    screen_eyes(s, b)
-                    time.sleep(0.4 if s != "open" else 1.2)
+            if state in ("animate", "sleep", "sleeping", "cry", "sad", "love", "heart", "hearts", "look"):
+                screen_eyes_animated(state, b)
             else:
                 screen_eyes(state, b)
         elif act == "test":
@@ -373,16 +639,17 @@ def main():
         print(f"  * Front Matrix: Gowin 25x16 ({FB_SCREEN}, 1200B RGB888)", flush=True)
         print(f"  * Top RGB Ring: 24 Channels ({FB_RING}, 72B RGB)", flush=True)
         print("\nCommands:")
-        print("  atrios screen clock           - Display current time")
-        print("  atrios screen eyes [state]    - Alice eyes (open/blink/wink/left/right/happy/animate)")
-        print("  atrios screen ticker \"TEXT\"  - Scrolling marquee")
-        print("  atrios screen pixel X Y [B]   - Individual LED control (0..255)")
-        print("  atrios screen off             - Turn off screen")
-        print("  atrios ring rainbow           - Rainbow animation")
-        print("  atrios ring volume 70         - Volume arc at 70%")
-        print("  atrios ring red               - Mic Mute solid red")
-        print("  atrios ring off               - Turn off ring")
-        print("  atrios sensor                 - Read live lux level")
+        print("  atrios screen kisser [1|2|animate] - Boykisser cat animation (Frame 1 calm / Frame 2 happy)")
+        print("  atrios screen eyes [state]         - Eyes (open/blink/wink/left/right/up/down/happy/love/wide/angry/sleep/cry/squint/dizzy/animate)")
+        print("  atrios screen clock                - Display current time")
+        print("  atrios screen ticker \"TEXT\"       - Scrolling marquee")
+        print("  atrios screen pixel X Y [B]        - Individual LED control (0..255)")
+        print("  atrios screen off                  - Turn off screen")
+        print("  atrios ring rainbow                - Rainbow animation")
+        print("  atrios ring volume 70              - Volume arc at 70%")
+        print("  atrios ring red                    - Mic Mute solid red")
+        print("  atrios ring off                    - Turn off ring")
+        print("  atrios sensor                      - Read live lux level")
         print("==========================================================", flush=True)
 
 if __name__ == "__main__":
