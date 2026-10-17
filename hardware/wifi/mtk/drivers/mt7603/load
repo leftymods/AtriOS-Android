@@ -1,3 +1,0 @@
-insmod os/linux/mt7603_ap.ko mac=00:0c:43:76:03
-ifconfig ra0 10.10.10.2 up
-

@@ -1,3 +1,0 @@
-on post-fs-data
-    mkdir /data/vendor/HBG 0770 audioserver audioserver
-    symlink /vendor/etc/remote.txt /data/vendor/HBG/remote.txt
