@@ -41,22 +41,21 @@
 ## Статус аппаратных компонентов
 
 | Компонент | Железо / Чип | Шина / Интерфейс | Драйвер / Модуль | Статус |
-|:---|:---|:---|:---|:---:|
-| **Сборщик прошивки** | Конвейер `build_atrios.sh` | Host / WSL2 | `make_ext4fs` + `ampack` | <kbd>✔ Работает</kbd> |
-| **Загрузчик (U-Boot)** | Native S905X3 Bootloader | eMMC / USB Burn | `ampack` v2 image | <kbd>✔ Работает</kbd> |
-| **UART Консоль** | Amlogic UART0 (115200 8N1) | `/dev/ttyS0` | Интерактивный root shell | <kbd>✔ Работает</kbd> |
-| **LED Экран (25×16)** | Gowin GW1N FPGA (монохромный) | SPI1 + CS (`GPIOH_7`) | `gowin_led_device` (`/dev/fb4`) | <kbd>✔ Работает</kbd> |
-| **RGB-кольцо** | 2× IS31FL3236A (24 RGB / 72 LED) | I2C0 (`0x3c`, `0x3f`) | `quasar_led_ring.ko` (`/dev/fb5`) | <kbd>✔ Работает</kbd> |
-| **Датчик света** | Lite-On LTR-308ALS | I2C0 (`0x53`) | `ltr308als01` (`iio:device0`) | <kbd>✔ Работает</kbd> |
-| **Крутилка громкости**| Двухфазный квадратурный энкодер | `GPIOH_6`, `GPIOAO_10` | `rotary-volume.ko` | <kbd>✔ Работает</kbd> |
-| **Верхние кнопки** | Кнопка «Алиса» и Mute | `GPIOA_15`, `GPIOA_14` | `gpio_keypad` (DTS poll 20ms) | <kbd>✔ Работает</kbd> |
-| **Wi-Fi** | Realtek RTL8822CS (802.11ac 2×2) | SDIO (`sd_emmc_a`) | `88x2es.ko` + `/dev/wifi_power` | <kbd>✔ Работает</kbd> |
-| **Bluetooth** | Realtek RTL8822CS Bluetooth 5.0 | UART_A (`/dev/ttyAML1`) | `rtk_bt` (`hci0`) | <kbd>✔ Работает</kbd> |
-| **HDMI Видеовыход** | MPI7002 / Generic HDMI TX | HDMI TX (`osd1` / `fb0`) | `/dev/fb0` (1024×600 @ 60Hz) | <kbd>✔ Работает</kbd> |
-| **Зигби (Zigbee)** | Silicon Labs EFR32 | UART_AO_B (`/dev/ttyAML4`) | Reset GPIO работает (`atrios zigbee`) | <kbd>🔄 В отладке</kbd> |
-| **Микрофонный массив**| Everest ES7210 4-ch ADC | TDM-C, I2C1 | `snd-soc-es7210` (8 каналов) | <kbd>❓ Не проверено</kbd> |
-| **Динамики** | Silergy SY6045S (20V PVDD) | TDM-B, I2C2 (`0x2a`, `0x2b`)| `snd-soc-sy6045s` | <kbd>❌ Нет звука</kbd> |
-| **Аудиовыход 3.5 мм** | Everest ES8156 DAC | TDM-B, I2C2 (`0x10`) | `snd-soc-es8156` | <kbd>❌ Нет звука</kbd> |
+|:---|:---|:---|:---|:---|
+| **Загрузчик (U-Boot)** | Native S905X3 Bootloader | eMMC / USB Burn | U-Boot 2015.01 | Работает |
+| **UART Консоль** | Amlogic UART0 (115200 8N1) | `/dev/ttyS0` | Интерактивный root shell | Работает |
+| **LED Экран (25×16)** | Gowin GW1N FPGA (монохромный) | SPI1 + CS (`GPIOH_7`) | `gowin_led_device` (`/dev/fb4`) | Работает |
+| **RGB-кольцо** | 2× IS31FL3236A (24 RGB / 72 LED) | I2C0 (`0x3c`, `0x3f`) | `quasar_led_ring.ko` (`/dev/fb5`) | Работает |
+| **Датчик света** | Lite-On LTR-308ALS | I2C0 (`0x53`) | `ltr308als01` (`iio:device0`) | Работает |
+| **Крутилка громкости**| Двухфазный квадратурный энкодер | `GPIOH_6`, `GPIOAO_10` | `rotary-volume.ko` | Работает |
+| **Верхние кнопки** | Кнопка «Алиса» и Mute | `GPIOA_15`, `GPIOA_14` | `gpio_keypad` (DTS poll 20ms) | Работает |
+| **Wi-Fi** | Realtek RTL8822CS (802.11ac 2×2) | SDIO (`sd_emmc_a`) | `88x2es.ko` + `/dev/wifi_power` | Работает |
+| **Bluetooth** | Realtek RTL8822CS Bluetooth 5.0 | UART_A (`/dev/ttyAML1`) | `rtk_bt` (`hci0`) | Работает |
+| **HDMI Видеовыход** | MPI7002 / Generic HDMI TX | HDMI TX (`osd1` / `fb0`) | `/dev/fb0` (1024×600 @ 60Hz) | Работает |
+| **Зигби (Zigbee)** | Silicon Labs EFR32 | UART_AO_B (`/dev/ttyAML4`) | Reset GPIO (`atrios zigbee`) | В отладке |
+| **Микрофонный массив**| Everest ES7210 4-ch ADC | TDM-C, I2C1 | `snd-soc-es7210` (8 каналов) | Не проверено |
+| **Динамики** | Silergy SY6045S (20V PVDD) | TDM-B, I2C2 (`0x2a`, `0x2b`)| `snd-soc-sy6045s` | Не работает |
+| **Аудиовыход 3.5 мм** | Everest ES8156 DAC | TDM-B, I2C2 (`0x10`) | `snd-soc-es8156` | Не работает |
 
 > [!WARNING]
 > **Звуковая подсистема находится в доработке**: аудиодрайверы ядра регистрируются корректно, однако физический вывод звука на встроенные динамики и через разъём 3.5 мм на данный момент отсутствует (ведётся отладка линий включения питания усилителей и маршрутизации TDM в Device Tree).
